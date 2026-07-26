@@ -3,13 +3,11 @@
    ===================================================================== */
 
 let adminUser = null;
-let adminAccessToken = null;
 
 (async function init() {
   const auth = await requireRole("admin");
   if (!auth) return;
   adminUser = auth.session.user;
-  adminAccessToken = auth.session.access_token;
 
   document.getElementById("sidebarName").textContent = adminUser.email;
   document.getElementById("avatarInitial").textContent = initials(adminUser.email);
@@ -75,9 +73,17 @@ function bindGeneratePassword() {
 
 /* ---------------------- استدعاء دالة الخادم الوحيدة ---------------------- */
 async function callAdminApi(body) {
+  // نجلب رمز الجلسة الحالي مباشرة قبل كل استدعاء (بدل الاعتماد على رمز
+  // مخزَّن منذ تحميل الصفحة، والذي قد ينتهي بعد ساعة تقريبًا فيسبب خطأ
+  // "غير مصرح" رغم أن المستخدم فعليًا أدمن ومسجّل دخوله بشكل صحيح)
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !sessionData?.session) {
+    throw new Error("انتهت جلستك — سجّل الدخول مرة أخرى");
+  }
+
   const res = await fetch("/api/admin/teachers", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminAccessToken}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session.access_token}` },
     body: JSON.stringify(body),
   });
   const data = await res.json();
@@ -278,3 +284,4 @@ async function loadStorageUsage() {
 }
 
 function val(id) { return document.getElementById(id).value.trim(); }
+"إصلاح مشكلة انتهاء رمز الجلسة"
