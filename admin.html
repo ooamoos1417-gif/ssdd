@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة الإدارة | منصة ملفات إنجاز المعلمين</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand-mark"><span class="dot"></span> لوحة الإدارة</div>
+
+    <ul class="nav-list">
+      <li><a href="#overview" class="nav-link active" data-target="overview"><span class="ic">🏠</span> نظرة عامة</a></li>
+      <li><a href="#teachers" class="nav-link" data-target="teachers"><span class="ic">👩‍🏫</span> حسابات المعلمين</a></li>
+      <li><a href="#shares" class="nav-link" data-target="shares"><span class="ic">🔗</span> روابط المشاركة</a></li>
+      <li><a href="#storage" class="nav-link" data-target="storage"><span class="ic">💾</span> مساحة التخزين</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div class="profile-mini">
+        <div class="avatar" id="avatarInitial">أ</div>
+        <div class="meta"><div class="name" id="sidebarName">—</div><div class="role">مدير المنصة</div></div>
+      </div>
+      <button class="btn btn-outline btn-sm" id="logoutBtn">تسجيل الخروج ⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h2 id="topbarTitle">نظرة عامة</h2>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ===================== نظرة عامة ===================== -->
+      <section class="section" id="overview">
+        <div class="hero-card">
+          <h1>لوحة إدارة منصة ملفات إنجاز المعلمين</h1>
+          <p>أنشئ حسابات المعلمين، تابع الاشتراكات، وأشرف على روابط المشاركة من مكان واحد.</p>
+        </div>
+        <div class="grid cols-3" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-tile"><b id="statTotalTeachers">0</b><span>إجمالي المعلمين</span></div>
+          <div class="stat-tile"><b id="statActiveSubs">0</b><span>اشتراكات نشطة</span></div>
+          <div class="stat-tile"><b id="statExpiredSubs">0</b><span>اشتراكات منتهية</span></div>
+          <div class="stat-tile"><b id="statSuspended">0</b><span>حسابات موقوفة</span></div>
+        </div>
+      </section>
+
+      <!-- ===================== حسابات المعلمين ===================== -->
+      <section class="section" id="teachers">
+        <div class="section-head">
+          <div>
+            <h2><span class="ic">👩‍🏫</span> حسابات المعلمين</h2>
+            <p class="hint">أنشئ حسابًا جديدًا بعد استلام الدفعة، ثم أرسل بيانات الدخول للمعلم</p>
+          </div>
+          <button class="btn btn-primary btn-sm" data-modal="createTeacherModal">+ إنشاء حساب معلم</button>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>الاسم</th><th>البريد الإلكتروني</th><th>المدرسة</th><th>الاشتراك</th><th>ينتهي في</th><th>الحالة</th><th></th></tr>
+            </thead>
+            <tbody id="teachersTableBody"><tr><td colspan="7"><p class="empty-state">جارٍ التحميل...</p></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== روابط المشاركة (إشراف) ===================== -->
+      <section class="section" id="shares">
+        <div class="section-head">
+          <div><h2><span class="ic">🔗</span> روابط المشاركة</h2><p class="hint">كل الروابط التي أنشأها المعلمون لمشاركة ملفاتهم</p></div>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>المعلم</th><th>تاريخ الإنشاء</th><th>تاريخ الانتهاء</th><th>مرات المشاهدة</th><th>الحالة</th><th></th></tr></thead>
+            <tbody id="allSharesTableBody"><tr><td colspan="6"><p class="empty-state">جارٍ التحميل...</p></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== مساحة التخزين ===================== -->
+      <section class="section" id="storage">
+        <div class="section-head">
+          <div><h2><span class="ic">💾</span> مساحة التخزين</h2><p class="hint">إجمالي حجم ملفات الشواهد لكل معلم</p></div>
+        </div>
+        <div class="card" style="padding:20px; margin-bottom:16px;">
+          <b style="font-size:20px; color:var(--brand-700);" id="totalStorageUsed">0 ميجابايت</b>
+          <span style="color:var(--ink-soft); font-size:13px;"> إجمالي المساحة المستخدمة عبر كل الحسابات</span>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>المعلم</th><th>عدد الملفات</th><th>المساحة المستخدمة</th></tr></thead>
+            <tbody id="storageTableBody"><tr><td colspan="3"><p class="empty-state">جارٍ التحميل...</p></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ===================== نافذة إنشاء حساب معلم ===================== -->
+<div class="modal-overlay" id="createTeacherModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إنشاء حساب معلم جديد</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="createTeacherForm">
+      <div class="field"><label>الاسم الكامل</label><input type="text" id="newTeacherName" required /></div>
+      <div class="field"><label>البريد الإلكتروني</label><input type="email" id="newTeacherEmail" required /></div>
+      <div class="field">
+        <label>كلمة المرور المبدئية</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="newTeacherPassword" required style="flex:1;" />
+          <button type="button" class="btn btn-outline btn-sm" id="generatePasswordBtn">توليد</button>
+        </div>
+        <div class="field-hint">أرسل هذه البيانات للمعلم بطريقة آمنة (لن تظهر كلمة المرور مرة أخرى بعد الإنشاء)</div>
+      </div>
+      <div class="field"><label>المادة الدراسية</label><input type="text" id="newTeacherSubject" /></div>
+      <div class="field"><label>المدرسة</label><input type="text" id="newTeacherSchool" /></div>
+      <div class="field"><label>تاريخ انتهاء الاشتراك</label><input type="date" id="newTeacherEndDate" /></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;" id="createTeacherSubmitBtn">إنشاء الحساب</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== نافذة تعديل حساب معلم ===================== -->
+<div class="modal-overlay" id="editTeacherModal">
+  <div class="modal">
+    <div class="modal-head"><h3>تعديل حساب المعلم</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="editTeacherForm">
+      <input type="hidden" id="editTeacherId" />
+      <div class="field"><label>الاسم الكامل</label><input type="text" id="editTeacherName" required /></div>
+      <div class="field"><label>المادة الدراسية</label><input type="text" id="editTeacherSubject" /></div>
+      <div class="field"><label>المدرسة</label><input type="text" id="editTeacherSchool" /></div>
+      <div class="field">
+        <label>حالة الاشتراك</label>
+        <select id="editTeacherStatus"><option value="active">نشط</option><option value="trial">تجربة</option><option value="expired">منتهي</option></select>
+      </div>
+      <div class="field"><label>تاريخ انتهاء الاشتراك</label><input type="date" id="editTeacherEndDate" /></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ التعديلات</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

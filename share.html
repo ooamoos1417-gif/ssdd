@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ملف إنجاز — عرض مشاركة</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="share-page">
+
+<header class="share-topbar">
+  <div class="container" style="display:flex; align-items:center; gap:10px;">
+    <span class="brand-mark" style="color:var(--brand-700);"><span class="dot" style="background:var(--brand-600);"></span> ملفات إنجاز المعلمين</span>
+    <span style="margin-inline-start:auto; font-size:12px; color:var(--ink-soft); font-weight:700;">عرض مشاركة — بدون تسجيل دخول</span>
+  </div>
+</header>
+
+<main>
+  <div id="loadingBox" class="share-error-box">
+    <span class="spinner dark" style="width:26px; height:26px;"></span>
+    <p style="margin-top:14px; color:var(--ink-soft);">جارٍ التحقق من الرابط...</p>
+  </div>
+
+  <div id="errorBox" class="share-error-box" style="display:none;">
+    <span class="icon" id="errorIcon">⚠️</span>
+    <h2 id="errorTitle">رابط غير صحيح</h2>
+    <p style="margin-top:8px; color:var(--ink-soft); font-size:13.5px;">تواصل مع المعلم للحصول على رابط جديد إن كان ذلك مطلوبًا.</p>
+  </div>
+
+  <div id="docBox" class="share-doc" style="display:none;">
+    <header>
+      <div>
+        <p style="font-size:12px; font-weight:700; color:var(--gold); letter-spacing:1px;">ملف إنجاز معلم</p>
+        <h1 id="teacherName">—</h1>
+        <p id="teacherMeta" style="color:var(--ink-soft); font-size:13.5px; margin-top:4px;"></p>
+      </div>
+      <span class="avatar" id="docAvatar" style="width:60px; height:60px; font-size:22px;">م</span>
+    </header>
+
+    <div class="grid cols-3" style="margin-top:22px;">
+      <div class="stat-tile"><b id="statSchedule">0</b><span>حصص دراسية</span></div>
+      <div class="stat-tile"><b id="statCerts">0</b><span>شهادات</span></div>
+      <div class="stat-tile"><b id="statCourses">0</b><span>دورات تدريبية</span></div>
+    </div>
+
+    <section style="margin-top:28px;">
+      <h2 style="font-size:17px; margin-bottom:12px;">🗓️ الجدول الدراسي</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>اليوم</th><th>الحصة</th><th>الصف</th><th>المادة</th></tr></thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section style="margin-top:28px;">
+      <h2 style="font-size:17px; margin-bottom:12px;">🏅 الشهادات</h2>
+      <div class="grid cols-2" id="certsGrid"></div>
+    </section>
+
+    <section style="margin-top:28px;">
+      <h2 style="font-size:17px; margin-bottom:12px;">🎓 الدورات التدريبية</h2>
+      <div class="grid cols-2" id="coursesGrid"></div>
+    </section>
+
+    <section style="margin-top:28px;">
+      <h2 style="font-size:17px; margin-bottom:12px;">🚪 الزيارات الصفية</h2>
+      <div class="grid cols-2" id="visitsGrid"></div>
+    </section>
+
+    <section style="margin-top:28px;">
+      <h2 style="font-size:17px; margin-bottom:12px;">📊 التقييم الأدائي</h2>
+      <div class="grid cols-2" id="evalGrid"></div>
+    </section>
+
+    <section style="margin-top:28px;">
+      <h2 style="font-size:17px; margin-bottom:12px;">📎 ملفات الشواهد</h2>
+      <div class="file-list" id="filesList"></div>
+    </section>
+
+    <footer style="margin-top:36px; border-top:1px solid var(--line); padding-top:16px; text-align:center; font-size:12px; color:var(--ink-soft);">
+      عرض للقراءة فقط — لا يمكن التعديل أو الحذف أو رفع أي ملف من هذه الصفحة
+    </footer>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/share-view.js"></script>
+</body>
+</html>

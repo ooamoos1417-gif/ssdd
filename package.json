@@ -1,0 +1,10 @@
+{
+  "name": "teacher-portfolio-saas",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "منصة SaaS لملفات إنجاز المعلمين — حسابات ينشئها الأدمن فقط",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تسجيل الدخول | منصة ملفات إنجاز المعلمين</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-page">
+
+  <aside class="auth-visual">
+    <div class="brand-mark"><span class="dot"></span> ملفات إنجاز المعلمين</div>
+
+    <div class="auth-quote">
+      <p>منصة خاصة تديرها إدارة المنصة — كل معلم يدخل بحساب أنشأته الإدارة له بعد تفعيل الاشتراك، ويوثّق إنجازه في مكان واحد آمن.</p>
+      <span>لا تملك بيانات دخول؟ تواصل مع إدارة المنصة لإصدار حسابك.</span>
+    </div>
+
+    <div style="position:relative; z-index:2; font-size:13px; opacity:.75;">
+      جميع الحقوق محفوظة © منصة ملفات إنجاز المعلمين
+    </div>
+  </aside>
+
+  <section class="auth-form-wrap">
+    <div class="auth-form">
+      <h1>تسجيل الدخول</h1>
+      <p class="sub">أدخل البيانات التي أرسلتها لك إدارة المنصة</p>
+
+      <div class="form-msg" id="formMsg"></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">البريد الإلكتروني</label>
+          <input type="email" id="loginEmail" placeholder="name@school.edu.sa" required autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="loginPassword">كلمة المرور</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit" id="loginBtn">
+          <span class="btn-label">تسجيل الدخول</span>
+        </button>
+      </form>
+
+      <p class="auth-foot">
+        نسيت كلمة المرور أو واجهتك مشكلة بالدخول؟ تواصل مع إدارة المنصة لإعادة تعيينها — لا يمكن إنشاء حساب أو استرجاع كلمة المرور ذاتيًا من هنا.
+      </p>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

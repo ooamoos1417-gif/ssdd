@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة التحكم | ملف إنجازي</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand-mark"><span class="dot"></span> ملف إنجازي</div>
+
+    <ul class="nav-list">
+      <li><a href="#home" class="nav-link active" data-target="home"><span class="ic">🏠</span> الرئيسية</a></li>
+      <li><a href="#evidence" class="nav-link" data-target="evidence"><span class="ic">📎</span> ملفات الشواهد</a></li>
+      <li><a href="#schedule" class="nav-link" data-target="schedule"><span class="ic">🗓️</span> الجدول الدراسي</a></li>
+      <li><a href="#certificates" class="nav-link" data-target="certificates"><span class="ic">🏅</span> الشهادات</a></li>
+      <li><a href="#courses" class="nav-link" data-target="courses"><span class="ic">🎓</span> الدورات التدريبية</a></li>
+      <li><a href="#visits" class="nav-link" data-target="visits"><span class="ic">🚪</span> الزيارات الصفية</a></li>
+      <li><a href="#evaluation" class="nav-link" data-target="evaluation"><span class="ic">📊</span> التقييم الأدائي</a></li>
+      <li><a href="#sharing" class="nav-link" data-target="sharing"><span class="ic">🔗</span> مشاركة الملف</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div class="profile-mini">
+        <div class="avatar" id="avatarInitial">م</div>
+        <div class="meta">
+          <div class="name" id="sidebarName">—</div>
+          <div class="role" id="sidebarRole">معلم</div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" id="logoutBtn">تسجيل الخروج ⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h2 id="topbarTitle">الرئيسية</h2>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" id="exportPdfBtn">⬇️ تنزيل الملف PDF</button>
+      </div>
+    </header>
+
+    <div class="content" id="portfolioContent">
+
+      <!-- ===================== الرئيسية ===================== -->
+      <section class="section" id="home">
+        <div class="hero-card">
+          <h1 id="welcomeName">مرحبًا بك في ملف إنجازك</h1>
+          <p>تابع من هنا توثيق شواهدك، شهاداتك، دوراتك، جدولك، وزياراتك الصفية — في مكان واحد آمن.</p>
+          <div class="hero-stats">
+            <div class="stat"><b id="statFiles">0</b><span>ملف شاهد</span></div>
+            <div class="stat"><b id="statCerts">0</b><span>شهادة</span></div>
+            <div class="stat"><b id="statCourses">0</b><span>دورة تدريبية</span></div>
+            <div class="stat"><b id="statVisits">0</b><span>زيارة صفية</span></div>
+          </div>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="card" style="padding:20px;">
+            <h3 style="margin-bottom:10px;">حالة الاشتراك</h3>
+            <div id="subscriptionInfo" style="font-size:13.5px; color:var(--ink-soft);">جارٍ التحميل...</div>
+          </div>
+          <div class="card" style="padding:20px;">
+            <h3 style="margin-bottom:10px;">🔗 مشاركة سريعة</h3>
+            <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">أنشئ رابطًا لمشاركة ملفك مع المدير أو المشرف — بدون تسجيل دخول منهم.</p>
+            <button class="btn btn-primary btn-sm" data-modal="shareModal">🔗 إنشاء رابط مشاركة</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ملفات الشواهد ===================== -->
+      <section class="section" id="evidence">
+        <div class="section-head">
+          <div>
+            <h2><span class="ic">📎</span> ملفات الشواهد</h2>
+            <p class="hint">ارفع ملفات PDF أو Word أو Excel أو صورًا كشواهد على إنجازاتك</p>
+          </div>
+          <select id="evidenceCategoryFilter" class="btn btn-outline btn-sm" style="padding:10px 14px;">
+            <option value="all">كل التصنيفات</option>
+          </select>
+        </div>
+
+        <div class="card" style="padding:22px;">
+          <div class="field" style="max-width:260px; margin-bottom:14px;">
+            <label for="evidenceCategoryInput">تصنيف الملف</label>
+            <select id="evidenceCategoryInput">
+              <option>عام</option><option>خطط دروس</option><option>إنجاز طلابي</option>
+              <option>أنشطة صفية</option><option>مشاركات مجتمعية</option><option>تطوير مهني</option>
+            </select>
+          </div>
+
+          <div class="upload-zone" id="evidenceDropZone">
+            <span class="ic">⬆️</span>
+            <div>اسحب الملفات هنا أو <span class="browse" id="browseEvidence">اختر من جهازك</span></div>
+            <div class="types">PDF · Word · Excel · صور — حتى 20 ميجابايت للملف</div>
+            <input type="file" id="evidenceFileInput" multiple hidden accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" />
+          </div>
+
+          <div class="file-list" id="evidenceList"></div>
+        </div>
+      </section>
+
+      <!-- ===================== الجدول الدراسي ===================== -->
+      <section class="section" id="schedule">
+        <div class="section-head">
+          <div><h2><span class="ic">🗓️</span> الجدول الدراسي</h2></div>
+          <button class="btn btn-primary btn-sm" data-modal="scheduleModal">+ إضافة حصة</button>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>اليوم</th><th>الحصة</th><th>الصف</th><th>المادة</th><th></th></tr></thead>
+            <tbody id="scheduleTableBody"><tr><td colspan="5"><p class="empty-state">لا توجد حصص مضافة بعد</p></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== الشهادات ===================== -->
+      <section class="section" id="certificates">
+        <div class="section-head">
+          <div><h2><span class="ic">🏅</span> الشهادات</h2></div>
+          <button class="btn btn-primary btn-sm" data-modal="certificateModal">+ إضافة شهادة</button>
+        </div>
+        <div class="grid cols-3" id="certificatesGrid"><p class="empty-state">لا توجد شهادات مضافة بعد</p></div>
+      </section>
+
+      <!-- ===================== الدورات التدريبية ===================== -->
+      <section class="section" id="courses">
+        <div class="section-head">
+          <div><h2><span class="ic">🎓</span> الدورات التدريبية</h2></div>
+          <button class="btn btn-primary btn-sm" data-modal="courseModal">+ إضافة دورة</button>
+        </div>
+        <div class="grid cols-3" id="coursesGrid"><p class="empty-state">لا توجد دورات مضافة بعد</p></div>
+      </section>
+
+      <!-- ===================== الزيارات الصفية ===================== -->
+      <section class="section" id="visits">
+        <div class="section-head">
+          <div><h2><span class="ic">🚪</span> الزيارات الصفية</h2></div>
+          <button class="btn btn-primary btn-sm" data-modal="visitModal">+ إضافة زيارة</button>
+        </div>
+        <div class="grid cols-2" id="visitsGrid"><p class="empty-state">لا توجد زيارات مسجّلة بعد</p></div>
+      </section>
+
+      <!-- ===================== التقييم الأدائي ===================== -->
+      <section class="section" id="evaluation">
+        <div class="section-head">
+          <div><h2><span class="ic">📊</span> التقييم الأدائي</h2></div>
+          <button class="btn btn-primary btn-sm" data-modal="evaluationModal">+ إضافة تقييم</button>
+        </div>
+        <div class="grid cols-2" id="evaluationGrid"><p class="empty-state">لا توجد تقييمات مضافة بعد</p></div>
+      </section>
+
+      <!-- ===================== مشاركة الملف ===================== -->
+      <section class="section" id="sharing">
+        <div class="section-head">
+          <div>
+            <h2><span class="ic">🔗</span> مشاركة الملف</h2>
+            <p class="hint">أنشئ روابط قراءة فقط لمشاركة ملفك مع المدير أو المشرف، بدون حاجتهم لتسجيل الدخول</p>
+          </div>
+          <button class="btn btn-primary btn-sm" data-modal="shareModal">+ إنشاء رابط مشاركة</button>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>الرابط</th><th>تاريخ الإنشاء</th><th>تاريخ الانتهاء</th><th>مرات المشاهدة</th><th>الحالة</th><th></th></tr></thead>
+            <tbody id="shareLinksTableBody"><tr><td colspan="6"><p class="empty-state">لا توجد روابط مشاركة بعد</p></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ===================== النوافذ المنبثقة ===================== -->
+
+<div class="modal-overlay" id="scheduleModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إضافة حصة</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="scheduleForm">
+      <div class="field"><label>اليوم</label>
+        <select id="scheduleDay" required>
+          <option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
+        </select>
+      </div>
+      <div class="field"><label>الحصة</label><input type="text" id="schedulePeriod" placeholder="الحصة الأولى" required /></div>
+      <div class="field"><label>الصف</label><input type="text" id="scheduleClass" placeholder="الصف الثالث ب" required /></div>
+      <div class="field"><label>المادة</label><input type="text" id="scheduleSubject" placeholder="الرياضيات" required /></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="certificateModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إضافة شهادة</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="certificateForm">
+      <div class="field"><label>عنوان الشهادة</label><input type="text" id="certTitle" required /></div>
+      <div class="field"><label>الجهة المانحة</label><input type="text" id="certIssuer" /></div>
+      <div class="field"><label>تاريخ الحصول عليها</label><input type="date" id="certDate" /></div>
+      <div class="field"><label>ملف الشهادة (اختياري)</label><input type="file" id="certFile" accept=".pdf,.doc,.docx,image/*" /></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="courseModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إضافة دورة تدريبية</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="courseForm">
+      <div class="field"><label>عنوان الدورة</label><input type="text" id="courseTitle" required /></div>
+      <div class="field"><label>الجهة المنظّمة</label><input type="text" id="courseProvider" /></div>
+      <div class="field"><label>عدد الساعات</label><input type="number" id="courseHours" min="0" /></div>
+      <div class="field"><label>التاريخ</label><input type="date" id="courseDate" /></div>
+      <div class="field"><label>ملف الشهادة (اختياري)</label><input type="file" id="courseFile" accept=".pdf,.doc,.docx,image/*" /></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="visitModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إضافة زيارة صفية</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="visitForm">
+      <div class="field"><label>اسم الزائر / المشرف</label><input type="text" id="visitVisitor" required /></div>
+      <div class="field"><label>تاريخ الزيارة</label><input type="date" id="visitDate" /></div>
+      <div class="field"><label>التقييم (من 100)</label><input type="number" id="visitRating" min="0" max="100" /></div>
+      <div class="field"><label>ملاحظات</label><textarea id="visitNotes"></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="evaluationModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إضافة تقييم أدائي</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="evaluationForm">
+      <div class="field"><label>الفترة</label><input type="text" id="evalPeriod" placeholder="الفصل الدراسي الأول 1447هـ" required /></div>
+      <div class="field"><label>الدرجة (من 100)</label><input type="number" id="evalScore" min="0" max="100" /></div>
+      <div class="field"><label>ملاحظات</label><textarea id="evalNotes"></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <div class="modal-head"><h3>إنشاء رابط مشاركة</h3><button class="modal-close" data-close>✕</button></div>
+    <form id="shareForm">
+      <div class="field">
+        <label>مدة صلاحية الرابط</label>
+        <select id="shareExpiry">
+          <option value="never">بدون انتهاء</option>
+          <option value="7">أسبوع</option>
+          <option value="30">شهر</option>
+          <option value="90">3 أشهر</option>
+        </select>
+      </div>
+      <p class="field-hint" style="margin-bottom:14px;">سيكون الرابط للعرض فقط — لا يمكن لمن يفتحه تعديل أو حذف أو رفع أي شيء.</p>
+      <button type="submit" class="btn btn-primary" style="width:100%;">إنشاء الرابط</button>
+    </form>
+    <div id="shareResultBox" style="display:none; margin-top:16px;">
+      <div class="field-hint" style="margin-bottom:8px;">انسخ الرابط وشاركه مع المدير أو المشرف:</div>
+      <div class="copy-field">
+        <input type="text" id="shareResultLink" readonly />
+        <button class="btn btn-outline btn-sm" id="copyShareLinkBtn">نسخ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/pdf-export.js"></script>
+</body>
+</html>
