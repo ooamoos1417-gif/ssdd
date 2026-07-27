@@ -2,6 +2,21 @@
    منطق صفحة عرض المشاركة العامة (بدون تسجيل دخول)
    ===================================================================== */
 
+// يجب أن تطابق هذي القائمة تمامًا نفس القائمة في js/dashboard.js
+const CRITERIA = [
+  { id: "job-duties", title: "أداء الواجبات الوظيفية" },
+  { id: "professional-community", title: "التفاعل مع المجتمع المهني" },
+  { id: "parents-interaction", title: "التفاعل مع أولياء الأمور" },
+  { id: "teaching-strategies", title: "التنوع في استراتيجيات التدريس" },
+  { id: "learners-results", title: "تحسين نتائج المتعلمين" },
+  { id: "learning-plan", title: "إعداد وتنفيذ خطة التعلم" },
+  { id: "learning-tech", title: "توظيف تقنيات ووسائل التعلم المناسبة" },
+  { id: "learning-environment", title: "تهيئة بيئة تعليمية" },
+  { id: "classroom-management", title: "الإدارة الصفية" },
+  { id: "results-analysis", title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
+  { id: "assessment-methods", title: "تنوع أساليب التقويم" },
+];
+
 const ERROR_MESSAGES = {
   invalid: { icon: "⚠️", title: "رابط غير صحيح" },
   disabled: { icon: "🚫", title: "تم تعطيل هذا الرابط من قِبل المعلم" },
@@ -42,6 +57,10 @@ function renderPortfolio(data) {
   document.getElementById("statSchedule").textContent = (data.schedule || []).length;
   document.getElementById("statCerts").textContent = (data.certificates || []).length;
   document.getElementById("statCourses").textContent = (data.courses || []).length;
+
+  const criteriaEvidence = data.criteria_evidence || [];
+  const documentedCriteriaCount = new Set(criteriaEvidence.map((e) => e.criterion_id)).size;
+  document.getElementById("statCriteria").textContent = documentedCriteriaCount;
 
   // الجدول الدراسي
   const scheduleBody = document.getElementById("scheduleBody");
@@ -102,4 +121,27 @@ function renderPortfolio(data) {
           <div class="factions"><a class="icon-btn" href="${f.file_url}" target="_blank" title="عرض">👁️</a></div>
         </div>`).join("")
     : `<p class="empty-state">لا توجد ملفات</p>`;
+
+  // المعايير — تُعرض كل الـ11 معيارًا (وليس فقط الموثَّقة منها) حتى يرى
+  // المدير/المشرف الصورة الكاملة لملف المعلم
+  document.getElementById("criteriaList").innerHTML = CRITERIA.map((c) => {
+    const items = criteriaEvidence.filter((e) => e.criterion_id === c.id);
+    return `
+      <div class="card" style="padding:16px 18px;">
+        <div class="top" style="margin-bottom: ${items.length ? "10px" : "0"};">
+          <h3>${escapeHtml(c.title)}</h3>
+          <span class="badge gold">${items.length} ${items.length === 1 ? "شاهد" : "شواهد"}</span>
+        </div>
+        ${items.length
+          ? `<div class="file-list" style="margin-top:0;">
+              ${items.map((f) => `
+                <div class="file-row">
+                  <div class="ficon">${iconForFileType(f.file_type || f.file_name)}</div>
+                  <div class="finfo"><div class="fname">${escapeHtml(f.title || f.file_name)}</div><div class="fmeta">${formatDate(f.uploaded_at)}</div></div>
+                  <div class="factions"><a class="icon-btn" href="${f.file_url}" target="_blank" title="عرض">👁️</a></div>
+                </div>`).join("")}
+             </div>`
+          : `<p class="empty-state" style="padding:10px 0;">لا توجد شواهد لهذا المعيار بعد</p>`}
+      </div>`;
+  }).join("");
 }
