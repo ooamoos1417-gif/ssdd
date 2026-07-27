@@ -19,6 +19,7 @@ let currentProfile = null;
   bindEvidenceUpload();
   bindEntityForms();
   bindShareForm();
+  bindCriterionUpload();
 
   await Promise.all([
     loadEvidenceFiles(),
@@ -28,6 +29,7 @@ let currentProfile = null;
     loadVisits(),
     loadEvaluations(),
     loadShareLinks(),
+    loadCriteriaGrid(),
   ]);
 })();
 
@@ -431,4 +433,178 @@ async function toggleShareLink(id, disable) {
   if (error) return showToast("تعذّر تحديث الرابط", "error");
   showToast(disable ? "تم تعطيل الرابط" : "تم تفعيل الرابط", "success");
   loadShareLinks();
+}
+
+/* =====================================================================
+   المعايير — شواهد غير محدودة لكل معيار
+   ===================================================================== */
+const CRITERIA = [
+  { id: "job-duties", title: "أداء الواجبات الوظيفية" },
+  { id: "professional-community", title: "التفاعل مع المجتمع المهني" },
+  { id: "parents-interaction", title: "التفاعل مع أولياء الأمور" },
+  { id: "teaching-strategies", title: "التنوع في استراتيجيات التدريس" },
+  { id: "learners-results", title: "تحسين نتائج المتعلمين" },
+  { id: "learning-plan", title: "إعداد وتنفيذ خطة التعلم" },
+  { id: "learning-tech", title: "توظيف تقنيات ووسائل التعلم المناسبة" },
+  { id: "learning-environment", title: "تهيئة بيئة تعليمية" },
+  { id: "classroom-management", title: "الإدارة الصفية" },
+  { id: "results-analysis", title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
+  { id: "assessment-methods", title: "تنوع أساليب التقويم" },
+];
+
+let currentCriterionId = null;
+let criterionCounts = {};
+
+// يُحسب عدد شواهد كل معيار دفعة واحدة (استعلام واحد بدل 11 استعلامًا)
+async function loadCriteriaGrid() {
+  const { data, error } = await supabaseClient
+    .from("criteria_evidence")
+    .select("criterion_id")
+    .eq("teacher_id", currentUser.id);
+
+  if (error) { console.error(error); return; }
+
+  criterionCounts = {};
+  data.forEach((row) => { criterionCounts[row.criterion_id] = (criterionCounts[row.criterion_id] || 0) + 1; });
+
+  const grid = document.getElementById("criteriaGrid");
+  grid.innerHTML = CRITERIA.map((c) => {
+    const count = criterionCounts[c.id] || 0;
+    return `
+      <div class="card list-card">
+        <div class="top">
+          <h3>${escapeHtml(c.title)}</h3>
+          <span class="badge gold" id="criterionBadge-${c.id}">${count} ${count === 1 ? "شاهد" : "شواهد"}</span>
+        </div>
+        <button class="btn btn-outline btn-sm" style="width:100%; margin-top:8px;" onclick="openCriterionModal('${c.id}')">
+          عرض / إضافة شواهد
+        </button>
+      </div>`;
+  }).join("");
+}
+
+function updateCriterionBadge(criterionId) {
+  const badge = document.getElementById(`criterionBadge-${criterionId}`);
+  if (!badge) return;
+  const count = criterionCounts[criterionId] || 0;
+  badge.textContent = `${count} ${count === 1 ? "شاهد" : "شواهد"}`;
+}
+
+function openCriterionModal(criterionId) {
+  currentCriterionId = criterionId;
+  const criterion = CRITERIA.find((c) => c.id === criterionId);
+  document.getElementById("criterionModalTitle").textContent = criterion ? criterion.title : "—";
+  document.getElementById("criterionTitleInput").value = "";
+  document.getElementById("criterionModal").classList.add("show");
+  loadCriterionEvidence();
+}
+
+async function loadCriterionEvidence() {
+  const { data, error } = await supabaseClient
+    .from("criteria_evidence")
+    .select("*")
+    .eq("teacher_id", currentUser.id)
+    .eq("criterion_id", currentCriterionId)
+    .order("uploaded_at", { ascending: false });
+
+  if (error) { console.error(error); return; }
+
+  criterionCounts[currentCriterionId] = data.length;
+  updateCriterionBadge(currentCriterionId);
+  document.getElementById("criterionEvidenceCount").textContent = `${data.length} ${data.length === 1 ? "شاهد" : "شواهد"}`;
+
+  const list = document.getElementById("criterionEvidenceList");
+  list.innerHTML = data.length
+    ? data.map((f) => criterionFileRowHtml(f)).join("")
+    : `<p class="empty-state">لا توجد شواهد لهذا المعيار بعد</p>`;
+
+  list.querySelectorAll("[data-crit-delete]").forEach((btn) =>
+    btn.addEventListener("click", () => deleteCriterionEvidence(btn.dataset.critDelete, btn.dataset.path))
+  );
+  list.querySelectorAll("[data-crit-edit]").forEach((btn) =>
+    btn.addEventListener("click", () => startEditCriterionTitle(btn.dataset.critEdit))
+  );
+}
+
+function criterionFileRowHtml(f) {
+  return `
+    <div class="file-row" id="critRow-${f.id}">
+      <div class="ficon">${iconForFileType(f.file_type || f.file_name)}</div>
+      <div class="finfo">
+        <div class="fname" id="critTitle-${f.id}">${escapeHtml(f.title || f.file_name)}</div>
+        <div class="fmeta">${escapeHtml(f.file_name)} · ${formatDate(f.uploaded_at)}</div>
+      </div>
+      <div class="factions">
+        <a class="icon-btn" href="${f.file_url}" target="_blank" title="فتح/تنزيل">⬇️</a>
+        <button class="icon-btn" data-crit-edit="${f.id}" title="تعديل الوصف">✏️</button>
+        <button class="icon-btn" data-crit-delete="${f.id}" data-path="${f.file_path}" title="حذف">🗑️</button>
+      </div>
+    </div>`;
+}
+
+function startEditCriterionTitle(id) {
+  const titleEl = document.getElementById(`critTitle-${id}`);
+  const current = titleEl.textContent;
+  titleEl.innerHTML = `
+    <div style="display:flex; gap:6px;">
+      <input type="text" id="critEditInput-${id}" value="${escapeHtml(current)}" style="flex:1; padding:6px 8px; border:1.5px solid var(--line); border-radius:8px; font-size:13px;" />
+      <button class="icon-btn" onclick="saveCriterionTitle('${id}')" title="حفظ">✔️</button>
+    </div>`;
+  document.getElementById(`critEditInput-${id}`).focus();
+}
+
+async function saveCriterionTitle(id) {
+  const input = document.getElementById(`critEditInput-${id}`);
+  const newTitle = input.value.trim();
+  const { error } = await supabaseClient.from("criteria_evidence").update({ title: newTitle }).eq("id", id);
+  if (error) { showToast("تعذّر حفظ التعديل", "error"); return; }
+  showToast("تم حفظ التعديل", "success");
+  loadCriterionEvidence();
+}
+
+async function deleteCriterionEvidence(id, path) {
+  if (!confirm("هل تريد حذف هذا الشاهد نهائيًا؟")) return;
+  await deleteEvidenceFile(path);
+  const { error } = await supabaseClient.from("criteria_evidence").delete().eq("id", id);
+  if (error) return showToast("تعذّر حذف الشاهد", "error");
+  showToast("تم حذف الشاهد", "success");
+  loadCriterionEvidence();
+}
+
+function bindCriterionUpload() {
+  const zone = document.getElementById("criterionUploadZone");
+  const input = document.getElementById("criterionFileInput");
+
+  document.getElementById("browseCriterionFile").addEventListener("click", () => input.click());
+  zone.addEventListener("click", (e) => { if (e.target === zone) input.click(); });
+  ["dragenter", "dragover"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove("drag"); }));
+  zone.addEventListener("drop", (e) => handleCriterionFiles(e.dataTransfer.files));
+  input.addEventListener("change", (e) => handleCriterionFiles(e.target.files));
+}
+
+async function handleCriterionFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length || !currentCriterionId) return;
+  const title = document.getElementById("criterionTitleInput").value.trim();
+
+  for (const file of files) {
+    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
+    try {
+      showToast(`جاري رفع ${file.name} ...`, "info");
+      const { url, path } = await uploadEvidenceFile(file, currentUser.id, `criteria/${currentCriterionId}`);
+      const { error } = await supabaseClient.from("criteria_evidence").insert({
+        teacher_id: currentUser.id, criterion_id: currentCriterionId,
+        title: title || "", file_name: file.name, file_url: url, file_path: path, file_type: file.type,
+      });
+      if (error) throw error;
+      showToast(`تم رفع ${file.name}`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast(`تعذّر رفع ${file.name}`, "error");
+    }
+  }
+  document.getElementById("criterionFileInput").value = "";
+  document.getElementById("criterionTitleInput").value = "";
+  loadCriterionEvidence();
 }
