@@ -3,28 +3,36 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>لوحة الإدارة | منصة ملفات إنجاز المعلمين</title>
+<title>لوحة تحكم المديرة | المدرسة الابتدائية بالجرد</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+<header class="official-header">
+  <img src="assets/ministry-logo.svg" alt="شعار وزارة التعليم" class="official-logo" onerror="this.style.display='none'" />
+  <div class="official-header-text">
+    <p class="official-entity">إدارة التعليم بمنطقة مكة المكرمة</p>
+    <p class="official-school">المدرسة الابتدائية بالجرد</p>
+  </div>
+</header>
 
 <div class="app-shell">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <aside class="sidebar" id="sidebar">
-    <div class="brand-mark"><span class="dot"></span> لوحة الإدارة</div>
+    <div class="brand-mark"><span class="dot"></span> لوحة تحكم المديرة</div>
 
     <ul class="nav-list">
       <li><a href="#overview" class="nav-link active" data-target="overview"><span class="ic">🏠</span> نظرة عامة</a></li>
-      <li><a href="#teachers" class="nav-link" data-target="teachers"><span class="ic">👩‍🏫</span> حسابات المعلمين</a></li>
+      <li><a href="#teachers" class="nav-link" data-target="teachers"><span class="ic">👩‍🏫</span> حسابات المعلمات</a></li>
       <li><a href="#shares" class="nav-link" data-target="shares"><span class="ic">🔗</span> روابط المشاركة</a></li>
       <li><a href="#storage" class="nav-link" data-target="storage"><span class="ic">💾</span> مساحة التخزين</a></li>
     </ul>
 
     <div class="sidebar-foot">
       <div class="profile-mini">
-        <div class="avatar" id="avatarInitial">أ</div>
-        <div class="meta"><div class="name" id="sidebarName">—</div><div class="role">مدير المنصة</div></div>
+        <div class="avatar" id="avatarInitial">م</div>
+        <div class="meta"><div class="name" id="sidebarName">—</div><div class="role">مديرة المدرسة</div></div>
       </div>
       <button class="btn btn-outline btn-sm" id="logoutBtn">تسجيل الخروج ⏻</button>
     </div>
@@ -43,25 +51,25 @@
       <!-- ===================== نظرة عامة ===================== -->
       <section class="section" id="overview">
         <div class="hero-card">
-          <h1>لوحة إدارة منصة ملفات إنجاز المعلمين</h1>
-          <p>أنشئ حسابات المعلمين، تابع الاشتراكات، وأشرف على روابط المشاركة من مكان واحد.</p>
+          <h1>لوحة تحكم المديرة</h1>
+          <p>أنشئي حسابات المعلمات، تابعي الاشتراكات، وأشرفي على روابط المشاركة من مكان واحد.</p>
         </div>
         <div class="grid cols-3" style="grid-template-columns:repeat(4,1fr);">
-          <div class="stat-tile"><b id="statTotalTeachers">0</b><span>إجمالي المعلمين</span></div>
+          <div class="stat-tile"><b id="statTotalTeachers">0</b><span>إجمالي المعلمات</span></div>
           <div class="stat-tile"><b id="statActiveSubs">0</b><span>اشتراكات نشطة</span></div>
           <div class="stat-tile"><b id="statExpiredSubs">0</b><span>اشتراكات منتهية</span></div>
           <div class="stat-tile"><b id="statSuspended">0</b><span>حسابات موقوفة</span></div>
         </div>
       </section>
 
-      <!-- ===================== حسابات المعلمين ===================== -->
+      <!-- ===================== حسابات المعلمات ===================== -->
       <section class="section" id="teachers">
         <div class="section-head">
           <div>
-            <h2><span class="ic">👩‍🏫</span> حسابات المعلمين</h2>
-            <p class="hint">أنشئ حسابًا جديدًا بعد استلام الدفعة، ثم أرسل بيانات الدخول للمعلم</p>
+            <h2><span class="ic">👩‍🏫</span> حسابات المعلمات</h2>
+            <p class="hint">أنشئي حسابًا جديدًا بعد استلام الدفعة، ثم أرسلي بيانات الدخول للمعلمة</p>
           </div>
-          <button class="btn btn-primary btn-sm" data-modal="createTeacherModal">+ إنشاء حساب معلم</button>
+          <button class="btn btn-primary btn-sm" data-modal="createTeacherModal">+ إنشاء حساب معلمة</button>
         </div>
         <div class="card table-wrap">
           <table class="data-table">
@@ -76,11 +84,11 @@
       <!-- ===================== روابط المشاركة (إشراف) ===================== -->
       <section class="section" id="shares">
         <div class="section-head">
-          <div><h2><span class="ic">🔗</span> روابط المشاركة</h2><p class="hint">كل الروابط التي أنشأها المعلمون لمشاركة ملفاتهم</p></div>
+          <div><h2><span class="ic">🔗</span> روابط المشاركة</h2><p class="hint">كل الروابط التي أنشأتها المعلمات لمشاركة ملفاتهن</p></div>
         </div>
         <div class="card table-wrap">
           <table class="data-table">
-            <thead><tr><th>المعلم</th><th>تاريخ الإنشاء</th><th>تاريخ الانتهاء</th><th>مرات المشاهدة</th><th>الحالة</th><th></th></tr></thead>
+            <thead><tr><th>المعلمة</th><th>تاريخ الإنشاء</th><th>تاريخ الانتهاء</th><th>مرات المشاهدة</th><th>الحالة</th><th></th></tr></thead>
             <tbody id="allSharesTableBody"><tr><td colspan="6"><p class="empty-state">جارٍ التحميل...</p></td></tr></tbody>
           </table>
         </div>
@@ -89,7 +97,7 @@
       <!-- ===================== مساحة التخزين ===================== -->
       <section class="section" id="storage">
         <div class="section-head">
-          <div><h2><span class="ic">💾</span> مساحة التخزين</h2><p class="hint">إجمالي حجم ملفات الشواهد لكل معلم</p></div>
+          <div><h2><span class="ic">💾</span> مساحة التخزين</h2><p class="hint">إجمالي حجم ملفات الشواهد لكل معلمة</p></div>
         </div>
         <div class="card" style="padding:20px; margin-bottom:16px;">
           <b style="font-size:20px; color:var(--brand-700);" id="totalStorageUsed">0 ميجابايت</b>
@@ -97,7 +105,7 @@
         </div>
         <div class="card table-wrap">
           <table class="data-table">
-            <thead><tr><th>المعلم</th><th>عدد الملفات</th><th>المساحة المستخدمة</th></tr></thead>
+            <thead><tr><th>المعلمة</th><th>عدد الملفات</th><th>المساحة المستخدمة</th></tr></thead>
             <tbody id="storageTableBody"><tr><td colspan="3"><p class="empty-state">جارٍ التحميل...</p></td></tr></tbody>
           </table>
         </div>
@@ -107,10 +115,10 @@
   </main>
 </div>
 
-<!-- ===================== نافذة إنشاء حساب معلم ===================== -->
+<!-- ===================== نافذة إنشاء حساب معلمة ===================== -->
 <div class="modal-overlay" id="createTeacherModal">
   <div class="modal">
-    <div class="modal-head"><h3>إنشاء حساب معلم جديد</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h3>إنشاء حساب معلمة جديدة</h3><button class="modal-close" data-close>✕</button></div>
     <form id="createTeacherForm">
       <div class="field"><label>الاسم الكامل</label><input type="text" id="newTeacherName" required /></div>
       <div class="field"><label>البريد الإلكتروني</label><input type="email" id="newTeacherEmail" required /></div>
@@ -120,20 +128,20 @@
           <input type="text" id="newTeacherPassword" required style="flex:1;" />
           <button type="button" class="btn btn-outline btn-sm" id="generatePasswordBtn">توليد</button>
         </div>
-        <div class="field-hint">أرسل هذه البيانات للمعلم بطريقة آمنة (لن تظهر كلمة المرور مرة أخرى بعد الإنشاء)</div>
+        <div class="field-hint">أرسلي هذه البيانات للمعلمة بطريقة آمنة (لن تظهر كلمة المرور مرة أخرى بعد الإنشاء)</div>
       </div>
       <div class="field"><label>المادة الدراسية</label><input type="text" id="newTeacherSubject" /></div>
-      <div class="field"><label>المدرسة</label><input type="text" id="newTeacherSchool" /></div>
+      <div class="field"><label>المدرسة</label><input type="text" id="newTeacherSchool" value="المدرسة الابتدائية بالجرد" /></div>
       <div class="field"><label>تاريخ انتهاء الاشتراك</label><input type="date" id="newTeacherEndDate" /></div>
       <button type="submit" class="btn btn-primary" style="width:100%;" id="createTeacherSubmitBtn">إنشاء الحساب</button>
     </form>
   </div>
 </div>
 
-<!-- ===================== نافذة تعديل حساب معلم ===================== -->
+<!-- ===================== نافذة تعديل حساب معلمة ===================== -->
 <div class="modal-overlay" id="editTeacherModal">
   <div class="modal">
-    <div class="modal-head"><h3>تعديل حساب المعلم</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h3>تعديل حساب المعلمة</h3><button class="modal-close" data-close>✕</button></div>
     <form id="editTeacherForm">
       <input type="hidden" id="editTeacherId" />
       <div class="field"><label>الاسم الكامل</label><input type="text" id="editTeacherName" required /></div>
