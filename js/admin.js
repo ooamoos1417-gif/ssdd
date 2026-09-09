@@ -73,9 +73,6 @@ function bindGeneratePassword() {
 
 /* ---------------------- استدعاء دالة الخادم الوحيدة ---------------------- */
 async function callAdminApi(body) {
-  // نجلب رمز الجلسة الحالي مباشرة قبل كل استدعاء (بدل الاعتماد على رمز
-  // مخزَّن منذ تحميل الصفحة، والذي قد ينتهي بعد ساعة تقريبًا فيسبب خطأ
-  // "غير مصرح" رغم أن المستخدم فعليًا أدمن ومسجّل دخوله بشكل صحيح)
   const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
   if (sessionError || !sessionData?.session) {
     throw new Error("انتهت جلستك — سجّل الدخول مرة أخرى");
@@ -87,12 +84,17 @@ async function callAdminApi(body) {
     body: JSON.stringify(body),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "حدث خطأ غير متوقع");
+  if (!res.ok) {
+    const debugParts = [data.debugReason, data.debugDetail, data.debugRole ? `role=${data.debugRole}` : null]
+      .filter(Boolean)
+      .join(" | ");
+    throw new Error(debugParts ? `${data.error} (${debugParts})` : data.error || "حدث خطأ غير متوقع");
+  }
   return data;
 }
 
 /* =====================================================================
-   إنشاء حساب معلم
+   إنشاء حساب معلمة
    ===================================================================== */
 function bindCreateTeacherForm() {
   document.getElementById("createTeacherForm").addEventListener("submit", async (e) => {
@@ -111,7 +113,7 @@ function bindCreateTeacherForm() {
         school: val("newTeacherSchool"),
         endDate: val("newTeacherEndDate") || null,
       });
-      showToast("تم إنشاء حساب المعلم بنجاح — أرسل له بيانات الدخول", "success");
+      showToast("تم إنشاء حساب المعلمة بنجاح — أرسلي لها بيانات الدخول", "success");
       e.target.reset();
       closeModal("createTeacherModal");
       loadTeachers();
@@ -143,7 +145,7 @@ async function loadTeachers() {
 
   const body = document.getElementById("teachersTableBody");
   if (!data.length) {
-    body.innerHTML = `<tr><td colspan="7"><p class="empty-state">لا يوجد معلمون بعد</p></td></tr>`;
+    body.innerHTML = `<tr><td colspan="7"><p class="empty-state">لا توجد معلمات بعد</p></td></tr>`;
     return;
   }
 
@@ -199,7 +201,7 @@ function bindEditTeacherForm() {
 }
 
 async function toggleSuspend(id, suspend) {
-  if (!confirm(suspend ? "إيقاف هذا الحساب سيمنع المعلم من الدخول فورًا. متابعة؟" : "إعادة تفعيل هذا الحساب؟")) return;
+  if (!confirm(suspend ? "إيقاف هذا الحساب سيمنع المعلمة من الدخول فورًا. متابعة؟" : "إعادة تفعيل هذا الحساب؟")) return;
   const { error } = await supabaseClient.from("accounts").update({ suspended: suspend }).eq("id", id);
   if (error) return showToast("تعذّر تحديث الحساب", "error");
   showToast(suspend ? "تم إيقاف الحساب" : "تم تفعيل الحساب", "success");
@@ -284,4 +286,3 @@ async function loadStorageUsage() {
 }
 
 function val(id) { return document.getElementById(id).value.trim(); }
-"إصلاح مشكلة انتهاء رمز الجلسة"
