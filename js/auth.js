@@ -62,13 +62,13 @@ loginForm.addEventListener("submit", async (e) => {
   setLoading(false);
 
   if (accError || !account) {
-    showMsg("تعذّر العثور على بيانات حسابك. تواصل مع إدارة المنصة.", "error");
+    showMsg("تعذّر العثور على بيانات حسابك. تواصلي مع المديرة.", "error");
     await supabaseClient.auth.signOut();
     return;
   }
 
   if (account.suspended) {
-    showMsg("تم إيقاف هذا الحساب. تواصل مع إدارة المنصة لمزيد من التفاصيل.", "error");
+    showMsg("تم إيقاف هذا الحساب. تواصلي مع المديرة لمزيد من التفاصيل.", "error");
     await supabaseClient.auth.signOut();
     return;
   }
@@ -79,7 +79,7 @@ loginForm.addEventListener("submit", async (e) => {
 function translateAuthError(msg = "") {
   const map = {
     "Invalid login credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-    "Email not confirmed": "لم يتم تأكيد البريد الإلكتروني بعد — تواصل مع إدارة المنصة",
+    "Email not confirmed": "لم يتم تأكيد البريد الإلكتروني بعد — تواصلي مع المديرة",
   };
   return map[msg] || "حدث خطأ غير متوقع، حاول مرة أخرى";
 }
