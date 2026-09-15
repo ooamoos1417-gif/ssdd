@@ -3,58 +3,77 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>تسجيل الدخول | المدرسة الابتدائية بالجرد</title>
+<title>تسجيل دخول المعلمات | المدرسة الابتدائية بالجرد</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-<header class="official-header">
-  <img src="assets/ministry-logo.svg" alt="شعار وزارة التعليم" class="official-logo" onerror="this.style.display='none'" />
-  <div class="official-header-text">
-    <p class="official-entity">إدارة التعليم بمنطقة مكة المكرمة</p>
-    <p class="official-school">المدرسة الابتدائية بالجرد</p>
-  </div>
-</header>
+<div class="auth-page-v2">
 
-<div class="auth-page">
-
-  <aside class="auth-visual">
-    <div class="brand-mark"><span class="dot"></span> ملفات إنجاز المعلمين</div>
-
-    <div class="auth-quote">
-      <p>منصة خاصة تديرها إدارة المدرسة — كل معلمة تدخل بحساب أنشأته المديرة لها بعد تفعيل الاشتراك، وتوثّق إنجازها في مكان واحد آمن.</p>
-      <span>لا تملكين بيانات دخول؟ تواصلي مع المديرة لإصدار حسابك.</span>
+  <aside class="auth-visual-v2">
+    <div class="auth-topright-badge">
+      <img src="assets/ministry-logo.svg" alt="شعار وزارة التعليم" class="auth-topright-logo" onerror="this.style.display='none'" />
+      <div class="auth-topright-text">
+        <strong>وزارة التعليم</strong>
+        <span>إدارة التعليم بمنطقة مكة المكرمة</span>
+        <span>المدرسة الابتدائية بالجرد</span>
+      </div>
     </div>
 
-    <div style="position:relative; z-index:2; font-size:13px; opacity:.75;">
-      جميع الحقوق محفوظة © منصة ملفات إنجاز المعلمين
+    <div class="auth-tagline">معًا نصنع فرقًا <span class="heart">♡</span></div>
+
+    <div class="auth-hero">
+      <svg class="auth-hero-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 20 C40 35, 25 40, 20 55 C25 50, 40 48, 50 60 C60 48, 75 50, 80 55 C75 40, 60 35, 50 20 Z" fill="#a99bd6" opacity=".9"/>
+        <path d="M20 55 C25 68, 40 70, 50 82 C60 70, 75 68, 80 55 C72 62, 58 62, 50 72 C42 62, 28 62, 20 55 Z" fill="#5fae9d" opacity=".9"/>
+        <circle cx="50" cy="18" r="4" fill="#3d3568"/>
+        <path d="M50 10 l1.6 3.4 3.7.5-2.7 2.6.6 3.7-3.2-1.7-3.2 1.7.6-3.7-2.7-2.6 3.7-.5z" fill="#3d3568"/>
+      </svg>
+      <h1 class="auth-hero-title">المعلمة</h1>
+      <p class="auth-hero-sub">قائدة التغيير .. وصانعة المستقبل</p>
+      <div class="auth-hero-divider"></div>
     </div>
+
+    <div class="auth-visual-footer"><span>📖</span> معًا .. نبني جيلًا مبدعًا</div>
   </aside>
 
-  <section class="auth-form-wrap">
-    <div class="auth-form">
-      <h1>تسجيل الدخول</h1>
-      <p class="sub">أدخلي البيانات التي أرسلتها لك المديرة</p>
+  <section class="auth-card-wrap-v2">
+    <div class="auth-card-v2">
+      <svg class="auth-card-logo" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 18 C50 18, 35 10, 12 16 L12 62 C35 56, 50 64, 50 64 C50 64, 65 56, 88 62 L88 16 C65 10, 50 18, 50 18 Z" fill="none" stroke="#3d3568" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 18 L50 64" stroke="#3d3568" stroke-width="4"/>
+        <path d="M50 8 L54 16 L50 24 L46 16 Z" fill="#5fae9d"/>
+        <circle cx="50" cy="6" r="3" fill="#3d3568"/>
+      </svg>
+
+      <h2>تسجيل دخول المعلمات</h2>
+      <p class="auth-card-sub">مرحبًا بك في منصة المعلمات</p>
+      <p class="auth-card-sub2">يرجى إدخال بياناتك للدخول إلى حسابك</p>
 
       <div class="form-msg" id="formMsg"></div>
 
       <form id="loginForm">
-        <div class="field">
-          <label for="loginEmail">البريد الإلكتروني</label>
-          <input type="email" id="loginEmail" placeholder="name@school.edu.sa" required autocomplete="username" />
+        <div class="field-v2">
+          <span class="field-icon">👤</span>
+          <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" required autocomplete="username" />
         </div>
-        <div class="field">
-          <label for="loginPassword">كلمة المرور</label>
-          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+        <div class="field-v2">
+          <span class="field-icon">🔒</span>
+          <input type="password" id="loginPassword" placeholder="كلمة المرور" required autocomplete="current-password" />
+          <button type="button" class="field-toggle" id="togglePassword" aria-label="إظهار كلمة المرور">👁️</button>
         </div>
-        <button type="submit" class="btn btn-primary auth-submit" id="loginBtn">
-          <span class="btn-label">تسجيل الدخول</span>
+
+        <div class="auth-row">
+          <label class="remember-me"><input type="checkbox" checked /> تذكرني</label>
+          <button type="button" class="link-btn" id="forgotPasswordBtn">نسيت كلمة المرور؟</button>
+        </div>
+
+        <button type="submit" class="btn-auth-submit" id="loginBtn">
+          <span class="btn-label">تسجيل الدخول</span><span class="arrow">←</span>
         </button>
       </form>
 
-      <p class="auth-foot">
-        نسيتِ كلمة المرور أو واجهتك مشكلة بالدخول؟ تواصلي مع المديرة لإعادة تعيينها — لا يمكن إنشاء حساب أو استرجاع كلمة المرور ذاتيًا من هنا.
-      </p>
+      <p class="auth-secure-note">🛡️ للدخول الآمن</p>
     </div>
   </section>
 </div>
