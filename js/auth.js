@@ -16,7 +16,7 @@ function hideMsg() {
 }
 function setLoading(loading) {
   loginBtn.disabled = loading;
-  loginBtn.innerHTML = loading ? `<span class="spinner"></span>` : `<span class="btn-label">تسجيل الدخول</span>`;
+  loginBtn.innerHTML = loading ? `<span class="spinner"></span>` : `<span class="btn-label">تسجيل الدخول</span><span class="arrow">←</span>`;
 }
 
 // إن كان هناك جلسة فعّالة بالفعل، وجّهه مباشرة حسب دوره
@@ -82,4 +82,22 @@ function translateAuthError(msg = "") {
     "Email not confirmed": "لم يتم تأكيد البريد الإلكتروني بعد — تواصلي مع المديرة",
   };
   return map[msg] || "حدث خطأ غير متوقع، حاول مرة أخرى";
+}
+
+// إظهار/إخفاء كلمة المرور (تجميلي فقط — لا يغيّر منطق تسجيل الدخول)
+const togglePasswordBtn = document.getElementById("togglePassword");
+if (togglePasswordBtn) {
+  togglePasswordBtn.addEventListener("click", () => {
+    const pwd = document.getElementById("loginPassword");
+    pwd.type = pwd.type === "password" ? "text" : "password";
+  });
+}
+
+// "نسيت كلمة المرور؟" — لا يوجد استرجاع ذاتي في هذا النظام (الحسابات
+// تُنشأ وتُدار حصرًا من لوحة المديرة)، فقط نوجّه المعلمة للتواصل معها
+const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+if (forgotPasswordBtn) {
+  forgotPasswordBtn.addEventListener("click", () => {
+    showMsg("لا يمكن استرجاع كلمة المرور ذاتيًا — تواصلي مع المديرة لإعادة تعيينها.", "error");
+  });
 }
