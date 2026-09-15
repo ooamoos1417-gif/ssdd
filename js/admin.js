@@ -335,3 +335,98 @@ async function openTeacherPortfolio(teacherId, teacherName) {
   document.getElementById("viewTeacherContent").innerHTML = `
     <div style="text-align:center; padding-bottom:16px; border-bottom:1px solid var(--line); margin-bottom:16px;">
       ${p.avatar_url
+        ? `<img src="${p.avatar_url}" alt="" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); margin-bottom:8px;" />`
+        : `<div class="avatar" style="width:72px; height:72px; font-size:24px; margin:0 auto 8px;">${initials(p.full_name)}</div>`}
+      <h3 style="font-size:18px;">${escapeHtml(p.full_name || teacherName)}</h3>
+      <p style="color:var(--ink-soft); font-size:13px;">${[p.subject, p.school].filter(Boolean).map(escapeHtml).join(" — ") || "—"}</p>
+    </div>
+
+    <div class="grid cols-3" style="margin-bottom:20px;">
+      <div class="stat-tile"><b>${schedule.length}</b><span>حصص دراسية</span></div>
+      <div class="stat-tile"><b>${certificates.length}</b><span>شهادات</span></div>
+      <div class="stat-tile"><b>${courses.length}</b><span>دورات تدريبية</span></div>
+    </div>
+
+    <h4 style="margin-bottom:8px;">🗓️ الجدول الدراسي</h4>
+    <div class="table-wrap" style="margin-bottom:20px;">
+      <table class="data-table">
+        <thead><tr><th>اليوم</th><th>الحصة</th><th>الصف</th><th>المادة</th></tr></thead>
+        <tbody>
+          ${schedule.length ? schedule.map((s) => `<tr><td>${escapeHtml(s.day)}</td><td>${escapeHtml(s.period)}</td><td>${escapeHtml(s.class_name)}</td><td>${escapeHtml(s.subject)}</td></tr>`).join("") : `<tr><td colspan="4"><p class="empty-state">لا توجد بيانات</p></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-bottom:8px;">🏅 الشهادات</h4>
+    <div class="grid cols-2" style="margin-bottom:20px;">
+      ${certificates.length ? certificates.map((c) => `
+        <div class="card list-card"><h3>${escapeHtml(c.title)}</h3>
+          <div class="meta-row">${c.issuer ? `<span class="badge">${escapeHtml(c.issuer)}</span>` : ""}${c.issue_date ? `<span class="badge gold">${formatDate(c.issue_date)}</span>` : ""}</div>
+          ${c.file_url ? `<a class="btn btn-outline btn-sm" href="${c.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
+        </div>`).join("") : `<p class="empty-state">لا توجد شهادات</p>`}
+    </div>
+
+    <h4 style="margin-bottom:8px;">🎓 الدورات التدريبية</h4>
+    <div class="grid cols-2" style="margin-bottom:20px;">
+      ${courses.length ? courses.map((c) => `
+        <div class="card list-card"><h3>${escapeHtml(c.title)}</h3>
+          <div class="meta-row">
+            ${c.provider ? `<span class="badge">${escapeHtml(c.provider)}</span>` : ""}
+            ${c.hours ? `<span class="badge gold">${c.hours} ساعة</span>` : ""}
+            ${c.course_date ? `<span class="badge">${formatDate(c.course_date)}</span>` : ""}
+          </div>
+          ${c.file_url ? `<a class="btn btn-outline btn-sm" href="${c.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
+        </div>`).join("") : `<p class="empty-state">لا توجد دورات</p>`}
+    </div>
+
+    <h4 style="margin-bottom:8px;">🚪 الزيارات الصفية</h4>
+    <div class="grid cols-2" style="margin-bottom:20px;">
+      ${visits.length ? visits.map((v) => `
+        <div class="card list-card"><h3>${escapeHtml(v.visitor_name)}</h3>
+          <div class="meta-row"><span class="badge">${formatDate(v.visit_date)}</span>${v.rating != null ? `<span class="rating-pill">⭐ ${v.rating}/100</span>` : ""}</div>
+          ${v.notes ? `<p class="notes">${escapeHtml(v.notes)}</p>` : ""}
+        </div>`).join("") : `<p class="empty-state">لا توجد زيارات</p>`}
+    </div>
+
+    <h4 style="margin-bottom:8px;">📊 التقييم الأدائي</h4>
+    <div class="grid cols-2" style="margin-bottom:20px;">
+      ${evaluations.length ? evaluations.map((ev) => `
+        <div class="card list-card"><h3>${escapeHtml(ev.period)}</h3>
+          <div class="meta-row">${ev.score != null ? `<span class="rating-pill">${ev.score}/100</span>` : ""}</div>
+          ${ev.notes ? `<p class="notes">${escapeHtml(ev.notes)}</p>` : ""}
+        </div>`).join("") : `<p class="empty-state">لا توجد تقييمات</p>`}
+    </div>
+
+    <h4 style="margin-bottom:8px;">📋 المعايير</h4>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+      ${ADMIN_CRITERIA.map((crit) => {
+        const items = criteriaEvidence.filter((e) => e.criterion_id === crit.id);
+        return `
+          <div class="card" style="padding:14px 16px;">
+            <div class="top" style="margin-bottom:${items.length ? "8px" : "0"};">
+              <h3 style="font-size:14px;">${escapeHtml(crit.title)}</h3>
+              <span class="badge gold">${items.length} ${items.length === 1 ? "شاهد" : "شواهد"}</span>
+            </div>
+            ${items.length ? `<div class="file-list" style="margin-top:0;">
+              ${items.map((f) => `
+                <div class="file-row">
+                  <div class="ficon">${iconForFileType(f.file_type || f.file_name)}</div>
+                  <div class="finfo"><div class="fname">${escapeHtml(f.title || f.file_name)}</div><div class="fmeta">${formatDate(f.uploaded_at)}</div></div>
+                  <div class="factions"><a class="icon-btn" href="${f.file_url}" target="_blank" title="عرض">👁️</a></div>
+                </div>`).join("")}
+            </div>` : ""}
+          </div>`;
+      }).join("")}
+    </div>
+
+    <h4 style="margin-bottom:8px;">📎 ملفات الشواهد العامة</h4>
+    <div class="file-list">
+      ${files.length ? files.map((f) => `
+        <div class="file-row">
+          <div class="ficon">${iconForFileType(f.file_type || f.file_name)}</div>
+          <div class="finfo"><div class="fname">${escapeHtml(f.file_name)}</div><div class="fmeta">${f.category || "عام"} · ${formatDate(f.uploaded_at)}</div></div>
+          <div class="factions"><a class="icon-btn" href="${f.file_url}" target="_blank" title="عرض">👁️</a></div>
+        </div>`).join("") : `<p class="empty-state">لا توجد ملفات</p>`}
+    </div>
+  `;
+}
