@@ -162,6 +162,7 @@ async function loadTeachers() {
       <td>${t.subscription_end_date ? formatDate(t.subscription_end_date) : "—"}</td>
       <td>${t.suspended ? '<span class="badge danger">موقوف</span>' : '<span class="badge success">فعّال</span>'}</td>
       <td style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="icon-btn" title="عرض الملف" onclick="openTeacherPortfolio('${t.id}', '${escapeHtml(p.full_name || "—")}')">👁️</button>
         <button class="icon-btn" title="تعديل" onclick='openEditTeacher(${JSON.stringify({ id: t.id, full_name: p.full_name, subject: p.subject, school: p.school, subscription_status: t.subscription_status, subscription_end_date: t.subscription_end_date })})'>✏️</button>
         <button class="icon-btn" title="${t.suspended ? "إعادة تفعيل" : "إيقاف"}" onclick="toggleSuspend('${t.id}', ${!t.suspended})">${t.suspended ? "✅" : "🚫"}</button>
         <button class="icon-btn" title="حذف نهائي" onclick="deleteTeacher('${t.id}', '${escapeHtml(p.full_name || "")}')">🗑️</button>
@@ -286,3 +287,51 @@ async function loadStorageUsage() {
 }
 
 function val(id) { return document.getElementById(id).value.trim(); }
+
+/* =====================================================================
+   عرض ملف معلمة كامل (قراءة فقط للمديرة) — نفس ما يراه المشرف عبر
+   رابط المشاركة، لكن مباشرة من لوحة الإدارة بدون الحاجة لرابط خاص.
+   لا يوجد هنا أي أداة تعديل أو حذف — عرض فقط.
+   ===================================================================== */
+const ADMIN_CRITERIA = [
+  { id: "job-duties", title: "أداء الواجبات الوظيفية" },
+  { id: "professional-community", title: "التفاعل مع المجتمع المهني" },
+  { id: "parents-interaction", title: "التفاعل مع أولياء الأمور" },
+  { id: "teaching-strategies", title: "التنوع في استراتيجيات التدريس" },
+  { id: "learners-results", title: "تحسين نتائج المتعلمين" },
+  { id: "learning-plan", title: "إعداد وتنفيذ خطة التعلم" },
+  { id: "learning-tech", title: "توظيف تقنيات ووسائل التعلم المناسبة" },
+  { id: "learning-environment", title: "تهيئة بيئة تعليمية" },
+  { id: "classroom-management", title: "الإدارة الصفية" },
+  { id: "results-analysis", title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
+  { id: "assessment-methods", title: "تنوع أساليب التقويم" },
+];
+
+async function openTeacherPortfolio(teacherId, teacherName) {
+  document.getElementById("viewTeacherTitle").textContent = `ملف ${teacherName}`;
+  document.getElementById("viewTeacherContent").innerHTML = `<p class="empty-state">جارٍ التحميل...</p>`;
+  document.getElementById("viewTeacherModal").classList.add("show");
+
+  const [profileRes, scheduleRes, certsRes, coursesRes, visitsRes, evalsRes, criteriaRes, filesRes] = await Promise.all([
+    supabaseClient.from("profiles").select("*").eq("id", teacherId).maybeSingle(),
+    supabaseClient.from("schedule").select("*").eq("teacher_id", teacherId).order("day"),
+    supabaseClient.from("certificates").select("*").eq("teacher_id", teacherId).order("issue_date", { ascending: false }),
+    supabaseClient.from("courses").select("*").eq("teacher_id", teacherId).order("course_date", { ascending: false }),
+    supabaseClient.from("classroom_visits").select("*").eq("teacher_id", teacherId).order("visit_date", { ascending: false }),
+    supabaseClient.from("evaluations").select("*").eq("teacher_id", teacherId),
+    supabaseClient.from("criteria_evidence").select("*").eq("teacher_id", teacherId),
+    supabaseClient.from("evidence_files").select("*").eq("teacher_id", teacherId).order("uploaded_at", { ascending: false }),
+  ]);
+
+  const p = profileRes.data || {};
+  const schedule = scheduleRes.data || [];
+  const certificates = certsRes.data || [];
+  const courses = coursesRes.data || [];
+  const visits = visitsRes.data || [];
+  const evaluations = evalsRes.data || [];
+  const criteriaEvidence = criteriaRes.data || [];
+  const files = filesRes.data || [];
+
+  document.getElementById("viewTeacherContent").innerHTML = `
+    <div style="text-align:center; padding-bottom:16px; border-bottom:1px solid var(--line); margin-bottom:16px;">
+      ${p.avatar_url
