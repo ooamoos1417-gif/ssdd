@@ -16,6 +16,8 @@
 </header>
 
 <main>
+  <div id="heroSlideshowContainer"></div>
+
   <div id="loadingBox" class="share-error-box">
     <span class="spinner dark" style="width:26px; height:26px;"></span>
     <p style="margin-top:14px; color:var(--ink-soft);">جارٍ التحقق من الرابط...</p>
@@ -46,12 +48,7 @@
 
     <section style="margin-top:28px;">
       <h2 style="font-size:17px; margin-bottom:12px;">🗓️ الجدول الدراسي</h2>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr><th>اليوم</th><th>الحصة</th><th>الصف</th><th>المادة</th></tr></thead>
-          <tbody id="scheduleBody"></tbody>
-        </table>
-      </div>
+      <div class="grid cols-2" id="scheduleGrid"></div>
     </section>
 
     <section style="margin-top:28px;">
