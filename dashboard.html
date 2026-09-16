@@ -16,6 +16,7 @@
 
     <ul class="nav-list">
       <li><a href="#home" class="nav-link active" data-target="home"><span class="ic">🏠</span> الرئيسية</a></li>
+      <li><a href="#showcase" class="nav-link" data-target="showcase"><span class="ic">🎬</span> صفحة العرض التقديمي</a></li>
       <li><a href="#evidence" class="nav-link" data-target="evidence"><span class="ic">📎</span> ملفات الشواهد</a></li>
       <li><a href="#schedule" class="nav-link" data-target="schedule"><span class="ic">🗓️</span> الجدول الدراسي</a></li>
       <li><a href="#certificates" class="nav-link" data-target="certificates"><span class="ic">🏅</span> الشهادات</a></li>
@@ -77,12 +78,12 @@
         </div>
       </section>
 
-      <!-- ===================== ملفات الشواهد ===================== -->
+      <!-- ===================== ملفات وشواهد أخرى ===================== -->
       <section class="section" id="evidence">
         <div class="section-head">
           <div>
-            <h2><span class="ic">📎</span> ملفات الشواهد</h2>
-            <p class="hint">ارفع ملفات PDF أو Word أو Excel أو صورًا كشواهد على إنجازاتك</p>
+            <h2><span class="ic">📎</span> ملفات وشواهد أخرى</h2>
+            <p class="hint">ارفعي ملفات PDF أو Word أو Excel أو صورًا كشواهد على إنجازاتك</p>
           </div>
           <select id="evidenceCategoryFilter" class="btn btn-outline btn-sm" style="padding:10px 14px;">
             <option value="all">كل التصنيفات</option>
@@ -100,7 +101,7 @@
 
           <div class="upload-zone" id="evidenceDropZone">
             <span class="ic">⬆️</span>
-            <div>اسحب الملفات هنا أو <span class="browse" id="browseEvidence">اختر من جهازك</span></div>
+            <div>اسحبي الملفات هنا أو <span class="browse" id="browseEvidence">اختاري من جهازك</span></div>
             <div class="types">PDF · Word · Excel · صور — حتى 20 ميجابايت للملف</div>
             <input type="file" id="evidenceFileInput" multiple hidden accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" />
           </div>
@@ -112,33 +113,58 @@
       <!-- ===================== الجدول الدراسي ===================== -->
       <section class="section" id="schedule">
         <div class="section-head">
-          <div><h2><span class="ic">🗓️</span> الجدول الدراسي</h2></div>
-          <button class="btn btn-primary btn-sm" data-modal="scheduleModal">+ إضافة حصة</button>
+          <div>
+            <h2><span class="ic">🗓️</span> الجدول الدراسي</h2>
+            <p class="hint">ارفعي صورة أو ملف الجدول الدراسي مباشرة</p>
+          </div>
         </div>
-        <div class="card table-wrap">
-          <table class="data-table">
-            <thead><tr><th>اليوم</th><th>الحصة</th><th>الصف</th><th>المادة</th><th></th></tr></thead>
-            <tbody id="scheduleTableBody"><tr><td colspan="5"><p class="empty-state">لا توجد حصص مضافة بعد</p></td></tr></tbody>
-          </table>
+        <div class="card" style="padding:22px;">
+          <div class="upload-zone" id="scheduleDropZone">
+            <span class="ic">⬆️</span>
+            <div>اسحبي الصورة هنا أو <span class="browse" id="browseSchedule">اختاري من جهازك</span></div>
+            <div class="types">صور أو PDF — يمكن رفع أكثر من صورة</div>
+            <input type="file" id="scheduleFileInput" multiple hidden accept="image/*,.pdf" />
+          </div>
+          <div class="grid cols-3" id="scheduleGrid" style="margin-top:16px;"><p class="empty-state">لا توجد صور للجدول بعد</p></div>
         </div>
       </section>
 
       <!-- ===================== الشهادات ===================== -->
       <section class="section" id="certificates">
         <div class="section-head">
-          <div><h2><span class="ic">🏅</span> الشهادات</h2></div>
-          <button class="btn btn-primary btn-sm" data-modal="certificateModal">+ إضافة شهادة</button>
+          <div>
+            <h2><span class="ic">🏅</span> الشهادات</h2>
+            <p class="hint">ارفعي صورة أو ملف الشهادة مباشرة</p>
+          </div>
         </div>
-        <div class="grid cols-3" id="certificatesGrid"><p class="empty-state">لا توجد شهادات مضافة بعد</p></div>
+        <div class="card" style="padding:22px;">
+          <div class="upload-zone" id="certificateDropZone">
+            <span class="ic">⬆️</span>
+            <div>اسحبي الملف هنا أو <span class="browse" id="browseCertificate">اختاري من جهازك</span></div>
+            <div class="types">صور أو PDF — يمكن رفع أكثر من شهادة</div>
+            <input type="file" id="certificateFileInput" multiple hidden accept="image/*,.pdf" />
+          </div>
+          <div class="grid cols-3" id="certificatesGrid" style="margin-top:16px;"><p class="empty-state">لا توجد شهادات مضافة بعد</p></div>
+        </div>
       </section>
 
       <!-- ===================== الدورات التدريبية ===================== -->
       <section class="section" id="courses">
         <div class="section-head">
-          <div><h2><span class="ic">🎓</span> الدورات التدريبية</h2></div>
-          <button class="btn btn-primary btn-sm" data-modal="courseModal">+ إضافة دورة</button>
+          <div>
+            <h2><span class="ic">🎓</span> الدورات التدريبية</h2>
+            <p class="hint">ارفعي صورة أو ملف شهادة الدورة مباشرة</p>
+          </div>
         </div>
-        <div class="grid cols-3" id="coursesGrid"><p class="empty-state">لا توجد دورات مضافة بعد</p></div>
+        <div class="card" style="padding:22px;">
+          <div class="upload-zone" id="courseDropZone">
+            <span class="ic">⬆️</span>
+            <div>اسحبي الملف هنا أو <span class="browse" id="browseCourse">اختاري من جهازك</span></div>
+            <div class="types">صور أو PDF — يمكن رفع أكثر من دورة</div>
+            <input type="file" id="courseFileInput" multiple hidden accept="image/*,.pdf" />
+          </div>
+          <div class="grid cols-3" id="coursesGrid" style="margin-top:16px;"><p class="empty-state">لا توجد دورات مضافة بعد</p></div>
+        </div>
       </section>
 
       <!-- ===================== الزيارات الصفية ===================== -->
@@ -170,6 +196,52 @@
         <div class="grid cols-3" id="criteriaGrid"></div>
       </section>
 
+      <!-- ===================== محتوى صفحة العرض التقديمي ===================== -->
+      <section class="section" id="showcase">
+        <div class="section-head">
+          <div>
+            <h2><span class="ic">🎬</span> صفحة العرض التقديمي</h2>
+            <p class="hint">هذا المحتوى يظهر في عرض الشرائح الترحيبي أعلى رابط المشاركة العام — يراه المدير أو المشرف أول ما يفتح رابطك</p>
+          </div>
+        </div>
+
+        <div class="card" style="padding:24px; max-width:640px;">
+          <div class="field">
+            <label>الصورة الشخصية</label>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div id="showcaseAvatarPreview" style="width:80px; height:80px; border-radius:50%; overflow:hidden; background:var(--brand-50); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:2px solid var(--line);">
+                <span style="font-size:26px; color:var(--brand-500);">👤</span>
+              </div>
+              <div>
+                <button type="button" class="btn btn-outline btn-sm" id="showcaseAvatarBtn">رفع / تغيير الصورة</button>
+                <input type="file" id="showcaseAvatarInput" hidden accept="image/*" />
+                <div class="field-hint">صورة شخصية واضحة — حتى 5 ميجابايت</div>
+              </div>
+            </div>
+          </div>
+
+          <form id="showcaseForm" style="margin-top:8px;">
+            <div class="field">
+              <label for="showcaseIntro">المقدمة</label>
+              <textarea id="showcaseIntro" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label for="showcaseMission">رسالتي</label>
+              <textarea id="showcaseMission" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label for="showcaseVision">رؤيتي</label>
+              <textarea id="showcaseVision" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label for="showcaseVision2030">رؤيتي نحو السعودية 2030 🇸🇦</label>
+              <textarea id="showcaseVision2030" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;" id="showcaseSaveBtn">حفظ المحتوى</button>
+          </form>
+        </div>
+      </section>
+
       <!-- ===================== مشاركة الملف ===================== -->
       <section class="section" id="sharing">
         <div class="section-head">
@@ -192,50 +264,6 @@
 </div>
 
 <!-- ===================== النوافذ المنبثقة ===================== -->
-
-<div class="modal-overlay" id="scheduleModal">
-  <div class="modal">
-    <div class="modal-head"><h3>إضافة حصة</h3><button class="modal-close" data-close>✕</button></div>
-    <form id="scheduleForm">
-      <div class="field"><label>اليوم</label>
-        <select id="scheduleDay" required>
-          <option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
-        </select>
-      </div>
-      <div class="field"><label>الحصة</label><input type="text" id="schedulePeriod" placeholder="الحصة الأولى" required /></div>
-      <div class="field"><label>الصف</label><input type="text" id="scheduleClass" placeholder="الصف الثالث ب" required /></div>
-      <div class="field"><label>المادة</label><input type="text" id="scheduleSubject" placeholder="الرياضيات" required /></div>
-      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
-    </form>
-  </div>
-</div>
-
-<div class="modal-overlay" id="certificateModal">
-  <div class="modal">
-    <div class="modal-head"><h3>إضافة شهادة</h3><button class="modal-close" data-close>✕</button></div>
-    <form id="certificateForm">
-      <div class="field"><label>عنوان الشهادة</label><input type="text" id="certTitle" required /></div>
-      <div class="field"><label>الجهة المانحة</label><input type="text" id="certIssuer" /></div>
-      <div class="field"><label>تاريخ الحصول عليها</label><input type="date" id="certDate" /></div>
-      <div class="field"><label>ملف الشهادة (اختياري)</label><input type="file" id="certFile" accept=".pdf,.doc,.docx,image/*" /></div>
-      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
-    </form>
-  </div>
-</div>
-
-<div class="modal-overlay" id="courseModal">
-  <div class="modal">
-    <div class="modal-head"><h3>إضافة دورة تدريبية</h3><button class="modal-close" data-close>✕</button></div>
-    <form id="courseForm">
-      <div class="field"><label>عنوان الدورة</label><input type="text" id="courseTitle" required /></div>
-      <div class="field"><label>الجهة المنظّمة</label><input type="text" id="courseProvider" /></div>
-      <div class="field"><label>عدد الساعات</label><input type="number" id="courseHours" min="0" /></div>
-      <div class="field"><label>التاريخ</label><input type="date" id="courseDate" /></div>
-      <div class="field"><label>ملف الشهادة (اختياري)</label><input type="file" id="courseFile" accept=".pdf,.doc,.docx,image/*" /></div>
-      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
-    </form>
-  </div>
-</div>
 
 <div class="modal-overlay" id="visitModal">
   <div class="modal">
