@@ -15,6 +15,7 @@ const CRITERIA = [
   { id: "classroom-management", title: "الإدارة الصفية" },
   { id: "results-analysis", title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
   { id: "assessment-methods", title: "تنوع أساليب التقويم" },
+  { id: "other-criteria", title: "معايير أخرى" },
 ];
 
 const ERROR_MESSAGES = {
@@ -129,7 +130,7 @@ function renderPortfolio(data) {
         </div>`).join("")
     : `<p class="empty-state">لا توجد ملفات</p>`;
 
-  // المعايير — تُعرض كل الـ11 معيارًا (وليس فقط الموثَّقة منها) حتى يرى
+  // المعايير — تُعرض كل الـ12 معيارًا (وليس فقط الموثَّقة منها) حتى يرى
   // المدير/المشرف الصورة الكاملة لملف المعلم
   document.getElementById("criteriaList").innerHTML = CRITERIA.map((c) => {
     const items = criteriaEvidence.filter((e) => e.criterion_id === c.id);
