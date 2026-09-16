@@ -489,6 +489,7 @@ const CRITERIA = [
   { id: "classroom-management", title: "الإدارة الصفية" },
   { id: "results-analysis", title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
   { id: "assessment-methods", title: "تنوع أساليب التقويم" },
+  { id: "other-criteria", title: "معايير أخرى" },
 ];
 
 let currentCriterionId = null;
