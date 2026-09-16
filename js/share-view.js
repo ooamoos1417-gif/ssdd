@@ -50,6 +50,10 @@ function renderPortfolio(data) {
   document.getElementById("docBox").style.display = "block";
 
   const p = data.profile || {};
+
+  document.getElementById("heroSlideshowContainer").innerHTML = buildHeroSlideshow(p);
+  initHeroSlideshow();
+
   document.getElementById("teacherName").textContent = p.full_name || "معلم";
   document.getElementById("teacherMeta").textContent = [p.subject, p.school].filter(Boolean).join(" — ") || "—";
   document.getElementById("docAvatar").textContent = initials(p.full_name);
@@ -63,10 +67,13 @@ function renderPortfolio(data) {
   document.getElementById("statCriteria").textContent = documentedCriteriaCount;
 
   // الجدول الدراسي
-  const scheduleBody = document.getElementById("scheduleBody");
-  scheduleBody.innerHTML = (data.schedule || []).length
-    ? data.schedule.map((s) => `<tr><td>${escapeHtml(s.day)}</td><td>${escapeHtml(s.period)}</td><td>${escapeHtml(s.class_name)}</td><td>${escapeHtml(s.subject)}</td></tr>`).join("")
-    : `<tr><td colspan="4"><p class="empty-state">لا توجد بيانات</p></td></tr>`;
+  document.getElementById("scheduleGrid").innerHTML = (data.schedule || []).length
+    ? data.schedule.map((s) => `
+        <div class="card list-card">
+          <h3>${iconForFileType(s.file_type || "")} صورة الجدول</h3>
+          ${s.file_url ? `<a class="btn btn-outline btn-sm" href="${s.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
+        </div>`).join("")
+    : `<p class="empty-state">لا توجد بيانات</p>`;
 
   // الشهادات
   document.getElementById("certsGrid").innerHTML = (data.certificates || []).length
@@ -144,4 +151,107 @@ function renderPortfolio(data) {
           : `<p class="empty-state" style="padding:10px 0;">لا توجد شواهد لهذا المعيار بعد</p>`}
       </div>`;
   }).join("");
+}
+
+/* =====================================================================
+   عرض الشرائح التقديمي — تعريفي بالكامل، للقراءة فقط (بدون أي أزرار
+   تعديل أو حذف)، ينتقل تلقائيًا كل 5 ثوانٍ، ويدعم التنقّل اليدوي
+   ===================================================================== */
+function buildHeroSlideshow(p) {
+  const name = p.full_name ? `أ/ ${p.full_name}` : "أ/ ــــــــ";
+  const school = p.school || "";
+  const avatarHtml = p.avatar_url
+    ? `<img class="hs-avatar" src="${p.avatar_url}" alt="${escapeHtml(p.full_name || "")}" />`
+    : `<div class="hs-avatar-fallback">${initials(p.full_name)}</div>`;
+
+  const slides = [
+    // 1) الترحيب
+    `<div class="hs-slide active" data-slide="0">
+      <span class="hs-watermark">🎓</span>
+      ${avatarHtml}
+      <h1 class="hs-title">مرحبًا بكم في ملف إنجازاتي</h1>
+      <p class="hs-name">${escapeHtml(name)}</p>
+      ${school ? `<p class="hs-school">${escapeHtml(school)}</p>` : ""}
+    </div>`,
+    // 2) المقدمة
+    `<div class="hs-slide" data-slide="1">
+      <p class="hs-eyebrow">مقدمة</p>
+      <div class="hs-divider"></div>
+      <p class="hs-body">${escapeHtml(p.intro_text || "")}</p>
+    </div>`,
+    // 3) رسالتي
+    `<div class="hs-slide" data-slide="2">
+      <p class="hs-eyebrow">رسالتي</p>
+      <div class="hs-divider"></div>
+      <p class="hs-body">${escapeHtml(p.mission_text || "")}</p>
+    </div>`,
+    // 4) رؤيتي
+    `<div class="hs-slide" data-slide="3">
+      <p class="hs-eyebrow">رؤيتي</p>
+      <div class="hs-divider"></div>
+      <p class="hs-body">${escapeHtml(p.vision_text || "")}</p>
+    </div>`,
+    // 5) رؤيتي نحو السعودية 2030
+    `<div class="hs-slide" data-slide="4">
+      <span class="hs-flag">🇸🇦</span>
+      <p class="hs-eyebrow">رؤيتي نحو السعودية 2030</p>
+      <div class="hs-divider"></div>
+      <p class="hs-body">${escapeHtml(p.vision2030_text || "")}</p>
+    </div>`,
+    // 6) الشاشة الختامية + زر الاستعراض
+    `<div class="hs-slide" data-slide="5">
+      <span class="hs-watermark">✨</span>
+      <h1 class="hs-title">رحلة إنجاز مستمرة</h1>
+      <p class="hs-body" style="margin-top:14px;">كل إنجاز هو خطوة نحو التميز، وكل تجربة فرصة للتعلم والنمو.</p>
+      <button class="hs-cta" id="hsCtaBtn">استعراض إنجازاتي ↓</button>
+    </div>`,
+  ];
+
+  return `
+    <section class="hero-slideshow" id="heroSlideshow">
+      ${slides.join("")}
+      <button class="hs-nav prev" id="hsPrev" aria-label="السابق">‹</button>
+      <button class="hs-nav next" id="hsNext" aria-label="التالي">›</button>
+      <div class="hs-dots" id="hsDots">
+        ${slides.map((_, i) => `<button class="hs-dot${i === 0 ? " active" : ""}" data-dot="${i}" aria-label="الشريحة ${i + 1}"></button>`).join("")}
+      </div>
+      <button class="hs-skip" id="hsSkip">تخطي المقدمة ↓</button>
+    </section>`;
+}
+
+function initHeroSlideshow() {
+  const root = document.getElementById("heroSlideshow");
+  if (!root) return;
+
+  const slideEls = Array.from(root.querySelectorAll(".hs-slide"));
+  const dotEls = Array.from(root.querySelectorAll(".hs-dot"));
+  let current = 0;
+  let timer = null;
+
+  function goTo(index) {
+    current = (index + slideEls.length) % slideEls.length;
+    slideEls.forEach((el, i) => el.classList.toggle("active", i === current));
+    dotEls.forEach((el, i) => el.classList.toggle("active", i === current));
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  function restartAutoplay() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(next, 5000);
+  }
+
+  document.getElementById("hsNext").addEventListener("click", () => { next(); restartAutoplay(); });
+  document.getElementById("hsPrev").addEventListener("click", () => { prev(); restartAutoplay(); });
+  dotEls.forEach((dot) => dot.addEventListener("click", () => { goTo(Number(dot.dataset.dot)); restartAutoplay(); }));
+
+  function scrollToPortfolio() {
+    if (timer) clearInterval(timer);
+    document.getElementById("docBox").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  document.getElementById("hsSkip").addEventListener("click", scrollToPortfolio);
+  document.getElementById("hsCtaBtn").addEventListener("click", scrollToPortfolio);
+
+  restartAutoplay();
 }
