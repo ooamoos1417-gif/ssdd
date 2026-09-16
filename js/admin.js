@@ -305,6 +305,7 @@ const ADMIN_CRITERIA = [
   { id: "classroom-management", title: "الإدارة الصفية" },
   { id: "results-analysis", title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
   { id: "assessment-methods", title: "تنوع أساليب التقويم" },
+  { id: "other-criteria", title: "معايير أخرى" },
 ];
 
 async function openTeacherPortfolio(teacherId, teacherName) {
@@ -314,7 +315,7 @@ async function openTeacherPortfolio(teacherId, teacherName) {
 
   const [profileRes, scheduleRes, certsRes, coursesRes, visitsRes, evalsRes, criteriaRes, filesRes] = await Promise.all([
     supabaseClient.from("profiles").select("*").eq("id", teacherId).maybeSingle(),
-    supabaseClient.from("schedule").select("*").eq("teacher_id", teacherId).order("day"),
+    supabaseClient.from("schedule").select("*").eq("teacher_id", teacherId).order("created_at", { ascending: false }),
     supabaseClient.from("certificates").select("*").eq("teacher_id", teacherId).order("issue_date", { ascending: false }),
     supabaseClient.from("courses").select("*").eq("teacher_id", teacherId).order("course_date", { ascending: false }),
     supabaseClient.from("classroom_visits").select("*").eq("teacher_id", teacherId).order("visit_date", { ascending: false }),
@@ -348,13 +349,12 @@ async function openTeacherPortfolio(teacherId, teacherName) {
     </div>
 
     <h4 style="margin-bottom:8px;">🗓️ الجدول الدراسي</h4>
-    <div class="table-wrap" style="margin-bottom:20px;">
-      <table class="data-table">
-        <thead><tr><th>اليوم</th><th>الحصة</th><th>الصف</th><th>المادة</th></tr></thead>
-        <tbody>
-          ${schedule.length ? schedule.map((s) => `<tr><td>${escapeHtml(s.day)}</td><td>${escapeHtml(s.period)}</td><td>${escapeHtml(s.class_name)}</td><td>${escapeHtml(s.subject)}</td></tr>`).join("") : `<tr><td colspan="4"><p class="empty-state">لا توجد بيانات</p></td></tr>`}
-        </tbody>
-      </table>
+    <div class="grid cols-2" style="margin-bottom:20px;">
+      ${schedule.length ? schedule.map((s) => `
+        <div class="card list-card">
+          <h3>${iconForFileType(s.file_type || "")} صورة الجدول</h3>
+          ${s.file_url ? `<a class="btn btn-outline btn-sm" href="${s.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
+        </div>`).join("") : `<p class="empty-state">لا توجد بيانات</p>`}
     </div>
 
     <h4 style="margin-bottom:8px;">🏅 الشهادات</h4>
