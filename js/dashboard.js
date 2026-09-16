@@ -11,6 +11,7 @@ let currentProfile = null;
   currentUser = auth.session.user;
 
   await loadProfile();
+  loadShowcaseContent();
   await loadSubscriptionInfo();
   bindNav();
   bindSidebarToggle();
@@ -18,8 +19,13 @@ let currentProfile = null;
   bindLogout();
   bindEvidenceUpload();
   bindEntityForms();
+  bindScheduleUpload();
+  bindCertificateUpload();
+  bindCourseUpload();
   bindShareForm();
   bindCriterionUpload();
+  bindShowcaseForm();
+  bindShowcaseAvatarUpload();
 
   await Promise.all([
     loadEvidenceFiles(),
@@ -203,30 +209,6 @@ async function deleteEvidenceFileRow(id, path) {
    نماذج الأقسام الأخرى
    ===================================================================== */
 function bindEntityForms() {
-  document.getElementById("scheduleForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const { error } = await supabaseClient.from("schedule").insert({
-      teacher_id: currentUser.id, day: val("scheduleDay"), period: val("schedulePeriod"),
-      class_name: val("scheduleClass"), subject: val("scheduleSubject"),
-    });
-    if (error) return showToast("تعذّر إضافة الحصة", "error");
-    e.target.reset(); closeModal("scheduleModal"); showToast("تمت إضافة الحصة", "success"); loadSchedule();
-  });
-
-  document.getElementById("certificateForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await submitWithOptionalFile(e, "certFile", "certificates", {
-      title: val("certTitle"), issuer: val("certIssuer"), issue_date: val("certDate") || null,
-    }, "certificateModal", loadCertificates);
-  });
-
-  document.getElementById("courseForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await submitWithOptionalFile(e, "courseFile", "courses", {
-      title: val("courseTitle"), provider: val("courseProvider"), hours: numOrNull("courseHours"), course_date: val("courseDate") || null,
-    }, "courseModal", loadCourses);
-  });
-
   document.getElementById("visitForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const { error } = await supabaseClient.from("classroom_visits").insert({
@@ -247,63 +229,120 @@ function bindEntityForms() {
   });
 }
 
-async function submitWithOptionalFile(e, fileInputId, table, fields, modalId, reload) {
-  const fileInput = document.getElementById(fileInputId);
-  const file = fileInput.files[0];
-  let file_url = null, file_path = null;
-  try {
-    if (file) {
-      const uploaded = await uploadEvidenceFile(file, currentUser.id, table);
-      file_url = uploaded.url; file_path = uploaded.path;
-    }
-    const { error } = await supabaseClient.from(table).insert({ teacher_id: currentUser.id, ...fields, file_url, file_path });
-    if (error) throw error;
-    e.target.reset(); closeModal(modalId); showToast("تمت الإضافة بنجاح", "success"); reload();
-  } catch (err) {
-    console.error(err); showToast("تعذّرت عملية الإضافة", "error");
-  }
-}
-
 function val(id) { return document.getElementById(id).value.trim(); }
 function numOrNull(id) { const v = document.getElementById(id).value; return v === "" ? null : Number(v); }
 
+/* ---------------------- رفع مباشر بدون نص: الجدول/الشهادات/الدورات ---------------------- */
+function bindDropZoneUpload(zoneId, inputId, browseId, handler) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  document.getElementById(browseId).addEventListener("click", () => input.click());
+  zone.addEventListener("click", (e) => { if (e.target === zone) input.click(); });
+  ["dragenter", "dragover"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove("drag"); }));
+  zone.addEventListener("drop", (e) => handler(e.dataTransfer.files));
+  input.addEventListener("change", (e) => { handler(e.target.files); input.value = ""; });
+}
+
+function bindScheduleUpload() {
+  bindDropZoneUpload("scheduleDropZone", "scheduleFileInput", "browseSchedule", handleScheduleFiles);
+}
+function bindCertificateUpload() {
+  bindDropZoneUpload("certificateDropZone", "certificateFileInput", "browseCertificate", handleCertificateFiles);
+}
+function bindCourseUpload() {
+  bindDropZoneUpload("courseDropZone", "courseFileInput", "browseCourse", handleCourseFiles);
+}
+
+async function handleScheduleFiles(fileList) {
+  for (const file of Array.from(fileList)) {
+    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
+    try {
+      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "schedule");
+      const { error } = await supabaseClient.from("schedule").insert({
+        teacher_id: currentUser.id, day: "", period: "", class_name: "", subject: "",
+        file_url: url, file_path: path, file_type: file.type,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error(err); showToast(`تعذّر رفع ${file.name}`, "error");
+    }
+  }
+  showToast("تم رفع صورة الجدول", "success");
+  loadSchedule();
+}
+
+async function handleCertificateFiles(fileList) {
+  for (const file of Array.from(fileList)) {
+    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
+    try {
+      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "certificates");
+      const { error } = await supabaseClient.from("certificates").insert({
+        teacher_id: currentUser.id, title: file.name, file_url: url, file_path: path,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error(err); showToast(`تعذّر رفع ${file.name}`, "error");
+    }
+  }
+  showToast("تم رفع الشهادة", "success");
+  loadCertificates();
+}
+
+async function handleCourseFiles(fileList) {
+  for (const file of Array.from(fileList)) {
+    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
+    try {
+      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "courses");
+      const { error } = await supabaseClient.from("courses").insert({
+        teacher_id: currentUser.id, title: file.name, file_url: url, file_path: path,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error(err); showToast(`تعذّر رفع ${file.name}`, "error");
+    }
+  }
+  showToast("تم رفع الدورة", "success");
+  loadCourses();
+}
+
+function fileCardHtml(item, table, reloadFnName) {
+  const label = item.file_type && item.file_type.startsWith("image/") ? "صورة" : (item.title || "ملف");
+  return `
+    <div class="card list-card">
+      <div class="top">
+        <h3>${iconForFileType(item.file_type || item.title || "")} ${escapeHtml(label)}</h3>
+        <button class="icon-btn" onclick="deleteRow('${table}','${item.id}', ${reloadFnName}, '${item.file_path || ""}')">🗑️</button>
+      </div>
+      <div class="meta-row"><span class="badge">${formatDate(item.created_at)}</span></div>
+      ${item.file_url ? `<a class="btn btn-outline btn-sm" href="${item.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
+    </div>`;
+}
+
 async function loadSchedule() {
-  const { data, error } = await supabaseClient.from("schedule").select("*").eq("teacher_id", currentUser.id).order("day", { ascending: true });
+  const { data, error } = await supabaseClient.from("schedule").select("*").eq("teacher_id", currentUser.id).order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
-  const body = document.getElementById("scheduleTableBody");
-  body.innerHTML = data.length ? data.map((s) => `
-      <tr>
-        <td>${escapeHtml(s.day)}</td><td>${escapeHtml(s.period)}</td><td>${escapeHtml(s.class_name)}</td><td>${escapeHtml(s.subject)}</td>
-        <td><button class="icon-btn" onclick="deleteRow('schedule','${s.id}', loadSchedule)">🗑️</button></td>
-      </tr>`).join("") : `<tr><td colspan="5"><p class="empty-state">لا توجد حصص مضافة بعد</p></td></tr>`;
+  document.getElementById("scheduleGrid").innerHTML = data.length
+    ? data.map((s) => fileCardHtml(s, "schedule", "loadSchedule")).join("")
+    : `<p class="empty-state">لا توجد صور للجدول بعد</p>`;
 }
 
 async function loadCertificates() {
   const { data, error } = await supabaseClient.from("certificates").select("*").eq("teacher_id", currentUser.id).order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
   document.getElementById("statCerts").textContent = data.length;
-  document.getElementById("certificatesGrid").innerHTML = data.length ? data.map((c) => `
-      <div class="card list-card">
-        <div class="top"><h3>🏅 ${escapeHtml(c.title)}</h3><button class="icon-btn" onclick="deleteRow('certificates','${c.id}', loadCertificates, '${c.file_path || ""}')">🗑️</button></div>
-        <div class="meta-row">${c.issuer ? `<span class="badge">${escapeHtml(c.issuer)}</span>` : ""}${c.issue_date ? `<span class="badge gold">${formatDate(c.issue_date)}</span>` : ""}</div>
-        ${c.file_url ? `<a class="btn btn-outline btn-sm" href="${c.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
-      </div>`).join("") : `<p class="empty-state">لا توجد شهادات مضافة بعد</p>`;
+  document.getElementById("certificatesGrid").innerHTML = data.length
+    ? data.map((c) => fileCardHtml(c, "certificates", "loadCertificates")).join("")
+    : `<p class="empty-state">لا توجد شهادات مضافة بعد</p>`;
 }
 
 async function loadCourses() {
   const { data, error } = await supabaseClient.from("courses").select("*").eq("teacher_id", currentUser.id).order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
   document.getElementById("statCourses").textContent = data.length;
-  document.getElementById("coursesGrid").innerHTML = data.length ? data.map((c) => `
-      <div class="card list-card">
-        <div class="top"><h3>🎓 ${escapeHtml(c.title)}</h3><button class="icon-btn" onclick="deleteRow('courses','${c.id}', loadCourses, '${c.file_path || ""}')">🗑️</button></div>
-        <div class="meta-row">
-          ${c.provider ? `<span class="badge">${escapeHtml(c.provider)}</span>` : ""}
-          ${c.hours ? `<span class="badge gold">${c.hours} ساعة</span>` : ""}
-          ${c.course_date ? `<span class="badge">${formatDate(c.course_date)}</span>` : ""}
-        </div>
-        ${c.file_url ? `<a class="btn btn-outline btn-sm" href="${c.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
-      </div>`).join("") : `<p class="empty-state">لا توجد دورات مضافة بعد</p>`;
+  document.getElementById("coursesGrid").innerHTML = data.length
+    ? data.map((c) => fileCardHtml(c, "courses", "loadCourses")).join("")
+    : `<p class="empty-state">لا توجد دورات مضافة بعد</p>`;
 }
 
 async function loadVisits() {
@@ -607,4 +646,70 @@ async function handleCriterionFiles(fileList) {
   document.getElementById("criterionFileInput").value = "";
   document.getElementById("criterionTitleInput").value = "";
   loadCriterionEvidence();
+}
+
+/* =====================================================================
+   محتوى صفحة العرض التقديمي (المقدمة/الرسالة/الرؤية/رؤية 2030 + الصورة)
+   ===================================================================== */
+function loadShowcaseContent() {
+  document.getElementById("showcaseIntro").value = currentProfile.intro_text || "";
+  document.getElementById("showcaseMission").value = currentProfile.mission_text || "";
+  document.getElementById("showcaseVision").value = currentProfile.vision_text || "";
+  document.getElementById("showcaseVision2030").value = currentProfile.vision2030_text || "";
+
+  const preview = document.getElementById("showcaseAvatarPreview");
+  if (currentProfile.avatar_url) {
+    preview.innerHTML = `<img src="${currentProfile.avatar_url}" alt="الصورة الشخصية" style="width:100%; height:100%; object-fit:cover;" />`;
+  }
+}
+
+function bindShowcaseForm() {
+  document.getElementById("showcaseForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("showcaseSaveBtn");
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.innerHTML = `<span class="spinner dark"></span>`;
+
+    const { error } = await supabaseClient.from("profiles").update({
+      intro_text: val("showcaseIntro"),
+      mission_text: val("showcaseMission"),
+      vision_text: val("showcaseVision"),
+      vision2030_text: val("showcaseVision2030"),
+    }).eq("id", currentUser.id);
+
+    btn.disabled = false;
+    btn.textContent = original;
+
+    if (error) return showToast("تعذّر حفظ المحتوى", "error");
+    showToast("تم حفظ محتوى صفحة العرض", "success");
+    await loadProfile();
+  });
+}
+
+function bindShowcaseAvatarUpload() {
+  const input = document.getElementById("showcaseAvatarInput");
+  document.getElementById("showcaseAvatarBtn").addEventListener("click", () => input.click());
+
+  input.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) { showToast("يجب اختيار ملف صورة", "error"); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast("حجم الصورة أكبر من 5 ميجابايت", "error"); return; }
+
+    try {
+      showToast("جاري رفع الصورة...", "info");
+      const { url } = await uploadEvidenceFile(file, currentUser.id, "avatar");
+      const { error } = await supabaseClient.from("profiles").update({ avatar_url: url }).eq("id", currentUser.id);
+      if (error) throw error;
+      showToast("تم تحديث الصورة الشخصية", "success");
+      await loadProfile();
+      loadShowcaseContent();
+    } catch (err) {
+      console.error(err);
+      showToast("تعذّر رفع الصورة", "error");
+    }
+  });
 }
