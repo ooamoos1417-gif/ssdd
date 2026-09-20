@@ -90,11 +90,14 @@ function pdfBuildContainer(data) {
     "position:fixed; top:0; left:-99999px; width:900px; background:#ffffff; " +
     "direction:rtl; font-family:'Tajawal','Segoe UI',Arial,sans-serif; color:#2b2b3d; padding:0;";
 
+  const themeBase = (p.theme_color && /^#[0-9a-f]{6}$/i.test(p.theme_color)) ? p.theme_color : "#0f9d67";
+  const themeDark = _pdfShade(themeBase, -22);
+
   wrap.innerHTML = `
     <style>
       #pdfExportRoot * { box-sizing: border-box; }
       #pdfExportRoot .pdf-cover {
-        background: linear-gradient(135deg,#0b6e4f,#0f9d67 60%,#c9a227);
+        background: linear-gradient(135deg, ${themeDark}, ${themeBase} 60%, #c9a227);
         color:#fff; padding:48px 40px; text-align:center;
       }
       #pdfExportRoot .pdf-cover h1 { font-size:30px; margin:16px 0 4px; }
@@ -110,7 +113,7 @@ function pdfBuildContainer(data) {
       }
       #pdfExportRoot .pdf-section { padding:26px 36px; border-bottom:1px solid #eee; }
       #pdfExportRoot .pdf-section h3 {
-        font-size:20px; margin:0 0 16px; color:#0b6e4f; display:flex; align-items:center; gap:8px;
+        font-size:20px; margin:0 0 16px; color:${themeDark}; display:flex; align-items:center; gap:8px;
         border-bottom:2px solid #c9a227; padding-bottom:8px;
       }
       #pdfExportRoot .pdf-empty { color:#999; font-size:14px; }
@@ -128,7 +131,7 @@ function pdfBuildContainer(data) {
       #pdfExportRoot .pdf-card .pdf-card-title { font-size:14px; font-weight:700; margin:0 0 4px; }
       #pdfExportRoot .pdf-card .pdf-card-meta { font-size:11px; color:#666; }
       #pdfExportRoot .pdf-card .pdf-link-tag {
-        display:inline-block; margin-top:6px; font-size:11px; color:#0b6e4f; font-weight:700;
+        display:inline-block; margin-top:6px; font-size:11px; color:${themeDark}; font-weight:700;
       }
       #pdfExportRoot .pdf-list-row {
         display:flex; justify-content:space-between; align-items:center;
@@ -136,7 +139,7 @@ function pdfBuildContainer(data) {
       }
       #pdfExportRoot .pdf-stats { display:flex; gap:14px; flex-wrap:wrap; padding:20px 36px; background:#f7f9fb; }
       #pdfExportRoot .pdf-stat { flex:1; min-width:110px; text-align:center; background:#fff; border-radius:10px; padding:14px; border:1px solid #eee; }
-      #pdfExportRoot .pdf-stat b { display:block; font-size:22px; color:#0b6e4f; }
+      #pdfExportRoot .pdf-stat b { display:block; font-size:22px; color:${themeDark}; }
       #pdfExportRoot .pdf-stat span { font-size:12px; color:#666; }
       #pdfExportRoot .pdf-footer { text-align:center; padding:18px; font-size:11px; color:#999; }
     </style>
@@ -181,7 +184,7 @@ function pdfBuildContainer(data) {
           ? data.visits.map((v) => `
             <div class="pdf-list-row">
               <div><b>${_pdfEsc(v.visitor_name || "زائر")}</b> — ${_pdfFormatDate(v.visit_date)}${v.notes ? `<div style="font-size:12px;color:#666;margin-top:4px;">${_pdfEsc(v.notes)}</div>` : ""}</div>
-              ${v.rating != null ? `<span style="background:#0b6e4f;color:#fff;border-radius:14px;padding:4px 12px;font-size:12px;">⭐ ${v.rating}/100</span>` : ""}
+              ${v.rating != null ? `<span style="background:${themeDark};color:#fff;border-radius:14px;padding:4px 12px;font-size:12px;">⭐ ${v.rating}/100</span>` : ""}
             </div>`).join("")
           : `<p class="pdf-empty">لا توجد زيارات مسجّلة</p>`
       }
@@ -377,6 +380,45 @@ function _pdfIsImage(fileType, url) {
   if (fileType && fileType.startsWith("image/")) return true;
   if (!fileType && url && /\.(png|jpe?g|gif|webp|bmp)(\?|$)/i.test(url)) return true;
   return false;
+}
+
+function _pdfShade(hex, deltaL) {
+  try {
+    hex = hex.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16) / 255;
+    const g = parseInt(hex.substr(2, 2), 16) / 255;
+    const b = parseInt(hex.substr(4, 2), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h *= 60;
+    }
+    s *= 100; l *= 100;
+    l = Math.min(95, Math.max(5, l + deltaL));
+    s /= 100; l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = l - c / 2;
+    let rr = 0, gg = 0, bb = 0;
+    if (h < 60) [rr, gg, bb] = [c, x, 0];
+    else if (h < 120) [rr, gg, bb] = [x, c, 0];
+    else if (h < 180) [rr, gg, bb] = [0, c, x];
+    else if (h < 240) [rr, gg, bb] = [0, x, c];
+    else if (h < 300) [rr, gg, bb] = [x, 0, c];
+    else [rr, gg, bb] = [c, 0, x];
+    const toHex = (v) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
+    return `#${toHex(rr)}${toHex(gg)}${toHex(bb)}`;
+  } catch (e) {
+    return hex.startsWith("#") ? hex : "#" + hex;
+  }
 }
 
 function _pdfIconForFileType(fileType, url) {
