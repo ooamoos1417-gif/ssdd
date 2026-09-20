@@ -94,6 +94,27 @@ function bindModals() {
 }
 function closeModal(id) { document.getElementById(id).classList.remove("show"); }
 
+/* ---------------------- أداة عامة: إضافة رابط بدل رفع ملف ---------------------- */
+function bindLinkAdd(inputId, btnId, handler) {
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+  if (!btn || !input) return;
+  const submit = () => {
+    const url = input.value.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) {
+      showToast("الرجاء إدخال رابط صحيح يبدأ بـ http:// أو https://", "error");
+      return;
+    }
+    handler(url);
+    input.value = "";
+  };
+  btn.addEventListener("click", submit);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); submit(); }
+  });
+}
+
 /* ---------------------- الملف الشخصي وحالة الاشتراك ---------------------- */
 async function loadProfile() {
   const { data } = await supabaseClient.from("profiles").select("*").eq("id", currentUser.id).maybeSingle();
@@ -136,6 +157,8 @@ function bindEvidenceUpload() {
   zone.addEventListener("drop", (e) => handleEvidenceFiles(e.dataTransfer.files));
   input.addEventListener("change", (e) => handleEvidenceFiles(e.target.files));
   document.getElementById("evidenceCategoryFilter").addEventListener("change", loadEvidenceFiles);
+
+  bindLinkAdd("evidenceLinkInput", "addEvidenceLinkBtn", handleEvidenceLink);
 }
 
 async function handleEvidenceFiles(fileList) {
@@ -163,6 +186,17 @@ async function handleEvidenceFiles(fileList) {
   loadEvidenceFiles();
 }
 
+async function handleEvidenceLink(url) {
+  const category = document.getElementById("evidenceCategoryInput").value;
+  const { error } = await supabaseClient.from("evidence_files").insert({
+    teacher_id: currentUser.id, file_name: url, category,
+    file_url: url, file_path: null, file_type: "link", file_size: null,
+  });
+  if (error) { console.error(error); showToast("تعذّر إضافة الرابط", "error"); return; }
+  showToast("تم إضافة الرابط", "success");
+  loadEvidenceFiles();
+}
+
 async function loadEvidenceFiles() {
   const { data, error } = await supabaseClient.from("evidence_files").select("*").eq("teacher_id", currentUser.id).order("uploaded_at", { ascending: false });
   if (error) { console.error(error); return; }
@@ -182,23 +216,24 @@ async function loadEvidenceFiles() {
 }
 
 function fileRowHtml(f) {
+  const isLink = f.file_type === "link";
   return `
     <div class="file-row">
-      <div class="ficon">${iconForFileType(f.file_type || f.file_name)}</div>
+      <div class="ficon">${isLink ? "🔗" : iconForFileType(f.file_type || f.file_name)}</div>
       <div class="finfo">
-        <div class="fname">${escapeHtml(f.file_name)}</div>
-        <div class="fmeta">${f.category || "عام"} · ${formatFileSize(f.file_size)} · ${formatDate(f.uploaded_at)}</div>
+        <div class="fname">${isLink ? "رابط خارجي" : escapeHtml(f.file_name)}</div>
+        <div class="fmeta">${f.category || "عام"} · ${isLink ? "رابط" : formatFileSize(f.file_size)} · ${formatDate(f.uploaded_at)}</div>
       </div>
       <div class="factions">
-        <a class="icon-btn" href="${f.file_url}" target="_blank" title="فتح/تنزيل">⬇️</a>
-        <button class="icon-btn" data-delete-file="${f.id}" data-path="${f.file_path}" title="حذف">🗑️</button>
+        <a class="icon-btn" href="${f.file_url}" target="_blank" title="${isLink ? "فتح الرابط" : "فتح/تنزيل"}">${isLink ? "🔗" : "⬇️"}</a>
+        <button class="icon-btn" data-delete-file="${f.id}" data-path="${f.file_path || ""}" title="حذف">🗑️</button>
       </div>
     </div>`;
 }
 
 async function deleteEvidenceFileRow(id, path) {
   if (!confirm("هل تريد حذف هذا الملف نهائيًا؟")) return;
-  await deleteEvidenceFile(path);
+  if (path) await deleteEvidenceFile(path);
   const { error } = await supabaseClient.from("evidence_files").delete().eq("id", id);
   if (error) return showToast("تعذّر حذف الملف", "error");
   showToast("تم حذف الملف", "success");
@@ -246,12 +281,15 @@ function bindDropZoneUpload(zoneId, inputId, browseId, handler) {
 
 function bindScheduleUpload() {
   bindDropZoneUpload("scheduleDropZone", "scheduleFileInput", "browseSchedule", handleScheduleFiles);
+  bindLinkAdd("scheduleLinkInput", "addScheduleLinkBtn", handleScheduleLink);
 }
 function bindCertificateUpload() {
   bindDropZoneUpload("certificateDropZone", "certificateFileInput", "browseCertificate", handleCertificateFiles);
+  bindLinkAdd("certificateLinkInput", "addCertificateLinkBtn", handleCertificateLink);
 }
 function bindCourseUpload() {
   bindDropZoneUpload("courseDropZone", "courseFileInput", "browseCourse", handleCourseFiles);
+  bindLinkAdd("courseLinkInput", "addCourseLinkBtn", handleCourseLink);
 }
 
 async function handleScheduleFiles(fileList) {
@@ -272,6 +310,16 @@ async function handleScheduleFiles(fileList) {
   loadSchedule();
 }
 
+async function handleScheduleLink(url) {
+  const { error } = await supabaseClient.from("schedule").insert({
+    teacher_id: currentUser.id, day: "", period: "", class_name: "", subject: "",
+    file_url: url, file_path: null, file_type: "link",
+  });
+  if (error) { console.error(error); showToast("تعذّر إضافة الرابط", "error"); return; }
+  showToast("تم إضافة رابط الجدول", "success");
+  loadSchedule();
+}
+
 async function handleCertificateFiles(fileList) {
   for (const file of Array.from(fileList)) {
     if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
@@ -286,6 +334,15 @@ async function handleCertificateFiles(fileList) {
     }
   }
   showToast("تم رفع الشهادة", "success");
+  loadCertificates();
+}
+
+async function handleCertificateLink(url) {
+  const { error } = await supabaseClient.from("certificates").insert({
+    teacher_id: currentUser.id, title: "رابط خارجي", file_url: url, file_path: null, file_type: "link",
+  });
+  if (error) { console.error(error); showToast("تعذّر إضافة الرابط", "error"); return; }
+  showToast("تم إضافة الرابط", "success");
   loadCertificates();
 }
 
@@ -306,16 +363,28 @@ async function handleCourseFiles(fileList) {
   loadCourses();
 }
 
+async function handleCourseLink(url) {
+  const { error } = await supabaseClient.from("courses").insert({
+    teacher_id: currentUser.id, title: "رابط خارجي", file_url: url, file_path: null, file_type: "link",
+  });
+  if (error) { console.error(error); showToast("تعذّر إضافة الرابط", "error"); return; }
+  showToast("تم إضافة الرابط", "success");
+  loadCourses();
+}
+
 function fileCardHtml(item, table, reloadFnName) {
-  const label = item.file_type && item.file_type.startsWith("image/") ? "صورة" : (item.title || "ملف");
+  const isLink = item.file_type === "link";
+  const label = isLink
+    ? (item.title && item.title !== "رابط خارجي" ? item.title : "رابط خارجي")
+    : (item.file_type && item.file_type.startsWith("image/") ? "صورة" : (item.title || "ملف"));
   return `
     <div class="card list-card">
       <div class="top">
-        <h3>${iconForFileType(item.file_type || item.title || "")} ${escapeHtml(label)}</h3>
+        <h3>${isLink ? "🔗" : iconForFileType(item.file_type || item.title || "")} ${escapeHtml(label)}</h3>
         <button class="icon-btn" onclick="deleteRow('${table}','${item.id}', ${reloadFnName}, '${item.file_path || ""}')">🗑️</button>
       </div>
       <div class="meta-row"><span class="badge">${formatDate(item.created_at)}</span></div>
-      ${item.file_url ? `<a class="btn btn-outline btn-sm" href="${item.file_url}" target="_blank">عرض الملف 📄</a>` : ""}
+      ${item.file_url ? `<a class="btn btn-outline btn-sm" href="${item.file_url}" target="_blank">${isLink ? "فتح الرابط 🔗" : "عرض الملف 📄"}</a>` : ""}
     </div>`;
 }
 
@@ -567,17 +636,18 @@ async function loadCriterionEvidence() {
 }
 
 function criterionFileRowHtml(f) {
+  const isLink = f.file_type === "link";
   return `
     <div class="file-row" id="critRow-${f.id}">
-      <div class="ficon">${iconForFileType(f.file_type || f.file_name)}</div>
+      <div class="ficon">${isLink ? "🔗" : iconForFileType(f.file_type || f.file_name)}</div>
       <div class="finfo">
-        <div class="fname" id="critTitle-${f.id}">${escapeHtml(f.title || f.file_name)}</div>
-        <div class="fmeta">${escapeHtml(f.file_name)} · ${formatDate(f.uploaded_at)}</div>
+        <div class="fname" id="critTitle-${f.id}">${escapeHtml(f.title || (isLink ? "رابط خارجي" : f.file_name))}</div>
+        <div class="fmeta">${isLink ? "رابط خارجي" : escapeHtml(f.file_name)} · ${formatDate(f.uploaded_at)}</div>
       </div>
       <div class="factions">
-        <a class="icon-btn" href="${f.file_url}" target="_blank" title="فتح/تنزيل">⬇️</a>
+        <a class="icon-btn" href="${f.file_url}" target="_blank" title="${isLink ? "فتح الرابط" : "فتح/تنزيل"}">${isLink ? "🔗" : "⬇️"}</a>
         <button class="icon-btn" data-crit-edit="${f.id}" title="تعديل الوصف">✏️</button>
-        <button class="icon-btn" data-crit-delete="${f.id}" data-path="${f.file_path}" title="حذف">🗑️</button>
+        <button class="icon-btn" data-crit-delete="${f.id}" data-path="${f.file_path || ""}" title="حذف">🗑️</button>
       </div>
     </div>`;
 }
@@ -604,7 +674,7 @@ async function saveCriterionTitle(id) {
 
 async function deleteCriterionEvidence(id, path) {
   if (!confirm("هل تريد حذف هذا الشاهد نهائيًا؟")) return;
-  await deleteEvidenceFile(path);
+  if (path) await deleteEvidenceFile(path);
   const { error } = await supabaseClient.from("criteria_evidence").delete().eq("id", id);
   if (error) return showToast("تعذّر حذف الشاهد", "error");
   showToast("تم حذف الشاهد", "success");
@@ -621,6 +691,8 @@ function bindCriterionUpload() {
   ["dragleave", "drop"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove("drag"); }));
   zone.addEventListener("drop", (e) => handleCriterionFiles(e.dataTransfer.files));
   input.addEventListener("change", (e) => handleCriterionFiles(e.target.files));
+
+  bindLinkAdd("criterionLinkInput", "addCriterionLinkBtn", handleCriterionLink);
 }
 
 async function handleCriterionFiles(fileList) {
@@ -645,6 +717,19 @@ async function handleCriterionFiles(fileList) {
     }
   }
   document.getElementById("criterionFileInput").value = "";
+  document.getElementById("criterionTitleInput").value = "";
+  loadCriterionEvidence();
+}
+
+async function handleCriterionLink(url) {
+  if (!currentCriterionId) return;
+  const title = document.getElementById("criterionTitleInput").value.trim();
+  const { error } = await supabaseClient.from("criteria_evidence").insert({
+    teacher_id: currentUser.id, criterion_id: currentCriterionId,
+    title: title || "", file_name: url, file_url: url, file_path: null, file_type: "link",
+  });
+  if (error) { console.error(error); showToast("تعذّر إضافة الرابط", "error"); return; }
+  showToast("تم إضافة الرابط", "success");
   document.getElementById("criterionTitleInput").value = "";
   loadCriterionEvidence();
 }
