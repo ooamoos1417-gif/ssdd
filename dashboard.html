@@ -106,6 +106,11 @@
             <input type="file" id="evidenceFileInput" multiple hidden accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" />
           </div>
 
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <input type="url" id="evidenceLinkInput" placeholder="أو الصقي رابط (Google Drive، يوتيوب، أي رابط...)" style="flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:13.5px;" />
+            <button type="button" class="btn btn-outline btn-sm" id="addEvidenceLinkBtn">➕ إضافة رابط</button>
+          </div>
+
           <div class="file-list" id="evidenceList"></div>
         </div>
       </section>
@@ -124,6 +129,10 @@
             <div>اسحبي الصورة هنا أو <span class="browse" id="browseSchedule">اختاري من جهازك</span></div>
             <div class="types">صور أو PDF — يمكن رفع أكثر من صورة</div>
             <input type="file" id="scheduleFileInput" multiple hidden accept="image/*,.pdf" />
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <input type="url" id="scheduleLinkInput" placeholder="أو الصقي رابط (Google Drive، يوتيوب، أي رابط...)" style="flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:13.5px;" />
+            <button type="button" class="btn btn-outline btn-sm" id="addScheduleLinkBtn">➕ إضافة رابط</button>
           </div>
           <div class="grid cols-3" id="scheduleGrid" style="margin-top:16px;"><p class="empty-state">لا توجد صور للجدول بعد</p></div>
         </div>
@@ -144,6 +153,10 @@
             <div class="types">صور أو PDF — يمكن رفع أكثر من شهادة</div>
             <input type="file" id="certificateFileInput" multiple hidden accept="image/*,.pdf" />
           </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <input type="url" id="certificateLinkInput" placeholder="أو الصقي رابط (Google Drive، يوتيوب، أي رابط...)" style="flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:13.5px;" />
+            <button type="button" class="btn btn-outline btn-sm" id="addCertificateLinkBtn">➕ إضافة رابط</button>
+          </div>
           <div class="grid cols-3" id="certificatesGrid" style="margin-top:16px;"><p class="empty-state">لا توجد شهادات مضافة بعد</p></div>
         </div>
       </section>
@@ -162,6 +175,10 @@
             <div>اسحبي الملف هنا أو <span class="browse" id="browseCourse">اختاري من جهازك</span></div>
             <div class="types">صور أو PDF — يمكن رفع أكثر من دورة</div>
             <input type="file" id="courseFileInput" multiple hidden accept="image/*,.pdf" />
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <input type="url" id="courseLinkInput" placeholder="أو الصقي رابط (Google Drive، يوتيوب، أي رابط...)" style="flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:13.5px;" />
+            <button type="button" class="btn btn-outline btn-sm" id="addCourseLinkBtn">➕ إضافة رابط</button>
           </div>
           <div class="grid cols-3" id="coursesGrid" style="margin-top:16px;"><p class="empty-state">لا توجد دورات مضافة بعد</p></div>
         </div>
@@ -330,6 +347,11 @@
       <div>اسحب الملف هنا أو <span class="browse" id="browseCriterionFile">اختر من جهازك</span></div>
       <div class="types">PDF · Word · Excel · صور — يمكن اختيار أكثر من ملف</div>
       <input type="file" id="criterionFileInput" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" multiple />
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <input type="url" id="criterionLinkInput" placeholder="أو الصقي رابط (Google Drive، يوتيوب، أي رابط...)" style="flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:13.5px;" />
+      <button type="button" class="btn btn-outline btn-sm" id="addCriterionLinkBtn">➕ إضافة رابط</button>
     </div>
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
