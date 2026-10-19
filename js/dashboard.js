@@ -10,6 +10,7 @@ let currentProfile = null;
   if (!auth) return;
   currentUser = auth.session.user;
 
+  fixFileInputAccept();
   await loadProfile();
   loadShowcaseContent();
   await loadSubscriptionInfo();
@@ -94,6 +95,106 @@ function bindModals() {
 }
 function closeModal(id) { document.getElementById(id).classList.remove("show"); }
 
+/* =====================================================================
+   تجهيز الملفات قبل الرفع
+   - يقبل ملفات بأسماء عربية أو إنجليزية (الاسم الأصلي يبقى للعرض،
+     والاسم المستخدم في التخزين يكون إنجليزيًا آمنًا)
+   - يعالج جوالات سامسونج (ملفات بدون نوع، صور كبيرة جدًا)
+   ===================================================================== */
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+
+const MIME_BY_EXT = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
+  webp: "image/webp", heic: "image/heic", heif: "image/heif",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+};
+const EXT_BY_MIME = {
+  "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif",
+  "image/webp": "webp", "image/heic": "heic", "image/heif": "heif",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+};
+
+// نزيل قيد accept حتى تظهر كل الملفات في نافذة الاختيار على جوالات سامسونج،
+// ونتحقق من نوع الملف بعد الاختيار بدل ذلك.
+function fixFileInputAccept() {
+  document.querySelectorAll('input[type="file"]').forEach((input) => input.removeAttribute("accept"));
+}
+
+function getFileExt(name) {
+  const m = /\.([A-Za-z0-9]{1,5})$/.exec(name || "");
+  return m ? m[1].toLowerCase() : "";
+}
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image decode failed")); };
+    img.src = url;
+  });
+}
+
+// تصغير الصور الكبيرة (صور جوالات سامسونج غالبًا كبيرة جدًا)
+async function compressImageIfNeeded(file) {
+  if (!file.type.startsWith("image/") || /gif|svg|heic|heif/.test(file.type)) return file;
+  if (file.size <= 1.5 * 1024 * 1024) return file;
+  try {
+    const img = await loadImageFromFile(file);
+    const maxSide = 2400;
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * scale);
+    const h = Math.round(img.naturalHeight * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], "image.jpg", { type: "image/jpeg" });
+  } catch (e) {
+    return file;
+  }
+}
+
+async function prepareFileForUpload(raw) {
+  let file = raw;
+  const ext0 = getFileExt(raw.name);
+  const type = raw.type || MIME_BY_EXT[ext0] || "";
+
+  const allowed = type.startsWith("image/") || EXT_BY_MIME[type] || MIME_BY_EXT[ext0];
+  if (!allowed) throw new Error("نوع الملف غير مدعوم (المسموح: PDF وصور وWord وExcel)");
+
+  if (type !== raw.type) file = new File([raw], raw.name, { type });
+  file = await compressImageIfNeeded(file);
+
+  const ext = getFileExt(file.name) || EXT_BY_MIME[file.type] || "bin";
+  const safeName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  return new File([file], safeName, { type: file.type });
+}
+
+async function safeUpload(rawFile, folder) {
+  const file = await prepareFileForUpload(rawFile);
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error("حجم الملف أكبر من 20 ميجابايت");
+  const { url, path } = await uploadEvidenceFile(file, currentUser.id, folder);
+  return { url, path, type: file.type, size: file.size };
+}
+
+function uploadFailMessage(name, err) {
+  const msg = err && err.message ? err.message : "";
+  const arabicReason = /[\u0600-\u06FF]/.test(msg) ? ` — ${msg}` : "";
+  return `تعذّر رفع ${name}${arabicReason}`;
+}
+
 /* ---------------------- أداة عامة: إضافة رابط بدل رفع ملف ---------------------- */
 function bindLinkAdd(inputId, btnId, handler) {
   const btn = document.getElementById(btnId);
@@ -154,8 +255,12 @@ function bindEvidenceUpload() {
   zone.addEventListener("click", (e) => { if (e.target === zone) input.click(); });
   ["dragenter", "dragover"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.add("drag"); }));
   ["dragleave", "drop"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove("drag"); }));
-  zone.addEventListener("drop", (e) => handleEvidenceFiles(e.dataTransfer.files));
-  input.addEventListener("change", (e) => handleEvidenceFiles(e.target.files));
+  zone.addEventListener("drop", (e) => handleEvidenceFiles(Array.from(e.dataTransfer.files)));
+  input.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    e.target.value = "";
+    handleEvidenceFiles(files);
+  });
   document.getElementById("evidenceCategoryFilter").addEventListener("change", loadEvidenceFiles);
 
   bindLinkAdd("evidenceLinkInput", "addEvidenceLinkBtn", handleEvidenceLink);
@@ -167,22 +272,20 @@ async function handleEvidenceFiles(fileList) {
   if (!files.length) return;
 
   for (const file of files) {
-    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
     try {
       showToast(`جاري رفع ${file.name} ...`, "info");
-      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "evidence");
+      const up = await safeUpload(file, "evidence");
       const { error } = await supabaseClient.from("evidence_files").insert({
         teacher_id: currentUser.id, file_name: file.name, category,
-        file_url: url, file_path: path, file_type: file.type, file_size: file.size,
+        file_url: up.url, file_path: up.path, file_type: up.type, file_size: up.size,
       });
       if (error) throw error;
       showToast(`تم رفع ${file.name}`, "success");
     } catch (err) {
       console.error(err);
-      showToast(`تعذّر رفع ${file.name}`, "error");
+      showToast(uploadFailMessage(file.name, err), "error");
     }
   }
-  document.getElementById("evidenceFileInput").value = "";
   loadEvidenceFiles();
 }
 
@@ -275,8 +378,12 @@ function bindDropZoneUpload(zoneId, inputId, browseId, handler) {
   zone.addEventListener("click", (e) => { if (e.target === zone) input.click(); });
   ["dragenter", "dragover"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.add("drag"); }));
   ["dragleave", "drop"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove("drag"); }));
-  zone.addEventListener("drop", (e) => handler(e.dataTransfer.files));
-  input.addEventListener("change", (e) => { handler(e.target.files); input.value = ""; });
+  zone.addEventListener("drop", (e) => handler(Array.from(e.dataTransfer.files)));
+  input.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    input.value = "";
+    handler(files);
+  });
 }
 
 function bindScheduleUpload() {
@@ -293,20 +400,22 @@ function bindCourseUpload() {
 }
 
 async function handleScheduleFiles(fileList) {
+  let ok = false;
   for (const file of Array.from(fileList)) {
-    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
     try {
-      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "schedule");
+      showToast(`جاري رفع ${file.name} ...`, "info");
+      const up = await safeUpload(file, "schedule");
       const { error } = await supabaseClient.from("schedule").insert({
         teacher_id: currentUser.id, day: "", period: "", class_name: "", subject: "",
-        file_url: url, file_path: path, file_type: file.type,
+        file_url: up.url, file_path: up.path, file_type: up.type,
       });
       if (error) throw error;
+      ok = true;
     } catch (err) {
-      console.error(err); showToast(`تعذّر رفع ${file.name}`, "error");
+      console.error(err); showToast(uploadFailMessage(file.name, err), "error");
     }
   }
-  showToast("تم رفع صورة الجدول", "success");
+  if (ok) showToast("تم رفع الجدول", "success");
   loadSchedule();
 }
 
@@ -321,19 +430,21 @@ async function handleScheduleLink(url) {
 }
 
 async function handleCertificateFiles(fileList) {
+  let ok = false;
   for (const file of Array.from(fileList)) {
-    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
     try {
-      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "certificates");
+      showToast(`جاري رفع ${file.name} ...`, "info");
+      const up = await safeUpload(file, "certificates");
       const { error } = await supabaseClient.from("certificates").insert({
-        teacher_id: currentUser.id, title: file.name, file_url: url, file_path: path,
+        teacher_id: currentUser.id, title: file.name, file_url: up.url, file_path: up.path, file_type: up.type,
       });
       if (error) throw error;
+      ok = true;
     } catch (err) {
-      console.error(err); showToast(`تعذّر رفع ${file.name}`, "error");
+      console.error(err); showToast(uploadFailMessage(file.name, err), "error");
     }
   }
-  showToast("تم رفع الشهادة", "success");
+  if (ok) showToast("تم رفع الشهادة", "success");
   loadCertificates();
 }
 
@@ -347,19 +458,21 @@ async function handleCertificateLink(url) {
 }
 
 async function handleCourseFiles(fileList) {
+  let ok = false;
   for (const file of Array.from(fileList)) {
-    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
     try {
-      const { url, path } = await uploadEvidenceFile(file, currentUser.id, "courses");
+      showToast(`جاري رفع ${file.name} ...`, "info");
+      const up = await safeUpload(file, "courses");
       const { error } = await supabaseClient.from("courses").insert({
-        teacher_id: currentUser.id, title: file.name, file_url: url, file_path: path,
+        teacher_id: currentUser.id, title: file.name, file_url: up.url, file_path: up.path, file_type: up.type,
       });
       if (error) throw error;
+      ok = true;
     } catch (err) {
-      console.error(err); showToast(`تعذّر رفع ${file.name}`, "error");
+      console.error(err); showToast(uploadFailMessage(file.name, err), "error");
     }
   }
-  showToast("تم رفع الدورة", "success");
+  if (ok) showToast("تم رفع الدورة", "success");
   loadCourses();
 }
 
@@ -689,8 +802,12 @@ function bindCriterionUpload() {
   zone.addEventListener("click", (e) => { if (e.target === zone) input.click(); });
   ["dragenter", "dragover"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.add("drag"); }));
   ["dragleave", "drop"].forEach((evt) => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove("drag"); }));
-  zone.addEventListener("drop", (e) => handleCriterionFiles(e.dataTransfer.files));
-  input.addEventListener("change", (e) => handleCriterionFiles(e.target.files));
+  zone.addEventListener("drop", (e) => handleCriterionFiles(Array.from(e.dataTransfer.files)));
+  input.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    e.target.value = "";
+    handleCriterionFiles(files);
+  });
 
   bindLinkAdd("criterionLinkInput", "addCriterionLinkBtn", handleCriterionLink);
 }
@@ -701,22 +818,20 @@ async function handleCriterionFiles(fileList) {
   const title = document.getElementById("criterionTitleInput").value.trim();
 
   for (const file of files) {
-    if (file.size > 20 * 1024 * 1024) { showToast(`الملف "${file.name}" أكبر من 20 ميجابايت`, "error"); continue; }
     try {
       showToast(`جاري رفع ${file.name} ...`, "info");
-      const { url, path } = await uploadEvidenceFile(file, currentUser.id, `criteria/${currentCriterionId}`);
+      const up = await safeUpload(file, `criteria/${currentCriterionId}`);
       const { error } = await supabaseClient.from("criteria_evidence").insert({
         teacher_id: currentUser.id, criterion_id: currentCriterionId,
-        title: title || "", file_name: file.name, file_url: url, file_path: path, file_type: file.type,
+        title: title || "", file_name: file.name, file_url: up.url, file_path: up.path, file_type: up.type,
       });
       if (error) throw error;
       showToast(`تم رفع ${file.name}`, "success");
     } catch (err) {
       console.error(err);
-      showToast(`تعذّر رفع ${file.name}`, "error");
+      showToast(uploadFailMessage(file.name, err), "error");
     }
   }
-  document.getElementById("criterionFileInput").value = "";
   document.getElementById("criterionTitleInput").value = "";
   loadCriterionEvidence();
 }
@@ -782,20 +897,20 @@ function bindShowcaseAvatarUpload() {
     e.target.value = "";
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) { showToast("يجب اختيار ملف صورة", "error"); return; }
-    if (file.size > 5 * 1024 * 1024) { showToast("حجم الصورة أكبر من 5 ميجابايت", "error"); return; }
+    const looksLikeImage = file.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
+    if (!looksLikeImage) { showToast("يجب اختيار ملف صورة", "error"); return; }
 
     try {
       showToast("جاري رفع الصورة...", "info");
-      const { url } = await uploadEvidenceFile(file, currentUser.id, "avatar");
-      const { error } = await supabaseClient.from("profiles").update({ avatar_url: url }).eq("id", currentUser.id);
+      const up = await safeUpload(file, "avatar");
+      const { error } = await supabaseClient.from("profiles").update({ avatar_url: up.url }).eq("id", currentUser.id);
       if (error) throw error;
       showToast("تم تحديث الصورة الشخصية", "success");
       await loadProfile();
       loadShowcaseContent();
     } catch (err) {
       console.error(err);
-      showToast("تعذّر رفع الصورة", "error");
+      showToast(uploadFailMessage("الصورة", err), "error");
     }
   });
 }
