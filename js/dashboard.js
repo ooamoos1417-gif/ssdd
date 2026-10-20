@@ -99,7 +99,7 @@ function closeModal(id) { document.getElementById(id).classList.remove("show"); 
    تجهيز الملفات قبل الرفع
    - يقبل ملفات بأسماء عربية أو إنجليزية (الاسم الأصلي يبقى للعرض،
      والاسم المستخدم في التخزين يكون إنجليزيًا آمنًا)
-   - يعالج جوالات سامسونج (ملفات بدون نوع، صور كبيرة جدًا)
+   - يعالج جوالات سامسونج والآيفون (ملفات بدون نوع، صور كبيرة، صور HEIC)
    ===================================================================== */
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
@@ -142,27 +142,59 @@ function loadImageFromFile(file) {
   });
 }
 
-// تصغير الصور الكبيرة (صور جوالات سامسونج غالبًا كبيرة جدًا)
+// تحويل/تصغير صورة إلى JPEG (يعمل مع صور سامسونج الكبيرة وصور HEIC على الآيفون/سفاري)
+async function rasterizeToJpeg(file, maxSide) {
+  const img = await loadImageFromFile(file);
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+  if (!blob) throw new Error("canvas export failed");
+  return new File([blob], "image.jpg", { type: "image/jpeg" });
+}
+
+// مكتبة تحويل HEIC (تُحمَّل فقط عند الحاجة، لمتصفحات لا تفتح HEIC مثل كروم/سامسونج)
+async function loadHeic2any() {
+  if (window.heic2any) return window.heic2any;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("heic lib failed"));
+    document.head.appendChild(s);
+  });
+  return window.heic2any;
+}
+
 async function compressImageIfNeeded(file) {
-  if (!file.type.startsWith("image/") || /gif|svg|heic|heif/.test(file.type)) return file;
-  if (file.size <= 1.5 * 1024 * 1024) return file;
+  const isHeic = /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+  if (!file.type.startsWith("image/") && !isHeic) return file;
+  if (/gif|svg/.test(file.type)) return file;
+  if (!isHeic && file.size <= 1.5 * 1024 * 1024) return file;
+
   try {
-    const img = await loadImageFromFile(file);
-    const maxSide = 2400;
-    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
-    const w = Math.round(img.naturalWidth * scale);
-    const h = Math.round(img.naturalHeight * scale);
-    const canvas = document.createElement("canvas");
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(img, 0, 0, w, h);
-    const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
-    if (!blob || blob.size >= file.size) return file;
-    return new File([blob], "image.jpg", { type: "image/jpeg" });
-  } catch (e) {
+    const jpg = await rasterizeToJpeg(file, 2400);
+    if (isHeic || jpg.size < file.size) return jpg;
     return file;
+  } catch (e) {
+    if (!isHeic) return file;
+  }
+
+  // HEIC لم يفتحه المتصفح مباشرة → نحوّله بالمكتبة
+  try {
+    const heic2any = await loadHeic2any();
+    const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+    const blob = Array.isArray(out) ? out[0] : out;
+    const jpg = new File([blob], "image.jpg", { type: "image/jpeg" });
+    try { return await rasterizeToJpeg(jpg, 2400); } catch (e) { return jpg; }
+  } catch (e) {
+    throw new Error("تعذّر تحويل صورة HEIC. غيّري تنسيق الكاميرا إلى JPEG أو أرسليها لنفسك ثم ارفعيها");
   }
 }
 
@@ -177,7 +209,7 @@ async function prepareFileForUpload(raw) {
   if (type !== raw.type) file = new File([raw], raw.name, { type });
   file = await compressImageIfNeeded(file);
 
-  const ext = getFileExt(file.name) || EXT_BY_MIME[file.type] || "bin";
+  const ext = EXT_BY_MIME[file.type] || getFileExt(file.name) || "bin";
   const safeName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
   return new File([file], safeName, { type: file.type });
 }
@@ -185,26 +217,52 @@ async function prepareFileForUpload(raw) {
 async function safeUpload(rawFile, folder) {
   const file = await prepareFileForUpload(rawFile);
   if (file.size > MAX_UPLOAD_BYTES) throw new Error("حجم الملف أكبر من 20 ميجابايت");
-  const { url, path } = await uploadEvidenceFile(file, currentUser.id, folder);
-  return { url, path, type: file.type, size: file.size };
+
+  // محاولتان (شبكة الجوال أحيانًا تنقطع للحظة)
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { url, path } = await uploadEvidenceFile(file, currentUser.id, folder);
+      return { url, path, type: file.type, size: file.size };
+    } catch (e) {
+      lastErr = e;
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
+    }
+  }
+  throw lastErr;
 }
 
 function uploadFailMessage(name, err) {
-  const msg = err && err.message ? err.message : "";
-  const arabicReason = /[\u0600-\u06FF]/.test(msg) ? ` — ${msg}` : "";
-  return `تعذّر رفع ${name}${arabicReason}`;
+  const msg = err && err.message ? String(err.message) : "";
+  const reason = msg ? ` — ${msg.slice(0, 120)}` : "";
+  return `تعذّر رفع ${name}${reason}`;
 }
 
 /* ---------------------- أداة عامة: إضافة رابط بدل رفع ملف ---------------------- */
+// يقبل الرابط حتى لو انلصق معه نص، أو كُتب بدون https://
+function normalizeUrl(raw) {
+  const text = (raw || "").trim();
+  if (!text) return "";
+  const m = text.match(/https?:\/\/[^\s]+/i);
+  let u = m ? m[0] : text.replace(/\s+/g, "");
+  if (!/^https?:\/\//i.test(u)) {
+    if (/^(www\.)?[\w-]+(\.[\w-]+)+([\/?#]|$)/i.test(u)) u = "https://" + u;
+    else return null;
+  }
+  try { new URL(u); } catch (e) { return null; }
+  return u;
+}
+
 function bindLinkAdd(inputId, btnId, handler) {
   const btn = document.getElementById(btnId);
   const input = document.getElementById(inputId);
   if (!btn || !input) return;
   const submit = () => {
-    const url = input.value.trim();
-    if (!url) return;
-    if (!/^https?:\/\//i.test(url)) {
-      showToast("الرجاء إدخال رابط صحيح يبدأ بـ http:// أو https://", "error");
+    const raw = input.value.trim();
+    if (!raw) return;
+    const url = normalizeUrl(raw);
+    if (!url) {
+      showToast("الرابط غير صحيح. انسخي الرابط كاملًا من درايف والصقيه هنا", "error");
       return;
     }
     handler(url);
